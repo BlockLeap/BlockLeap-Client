@@ -610,6 +610,14 @@ export default class LevelPlayer extends Phaser.Scene {
                                 <label for="level_desc" class="form-label" >Description</label>
                                 <textarea class="form-control" size="150" id="level_desc"></textarea>
                             </div>
+                            <div class="mb-3">
+                                <label for="tagSelect" class="form-label" >Tags</label>
+                                <select id="tagSelect" name="tags[]" multiple="multiple" style="width: 100%">
+                                  <option value="LP">Loops</option>
+                                  <option value="VR">Variable</option>
+                                  <option value="BS">Basic</option>
+                                </select>
+                            </div>
                         </form>
                     </div>
                     <div class="modal-footer">
@@ -637,6 +645,8 @@ export default class LevelPlayer extends Phaser.Scene {
           // Preguntar al usuario el nombre del nivel
           const levelName = (document.getElementById("level_name") as HTMLInputElement).value;
           const levelDescription= (document.getElementById("level_desc") as HTMLInputElement).value;
+          const selectData=$('#tagSelect').select2('data');
+          const tags=selectData.map(i=>i.text);
           const levelData = {
             level_id: this.getLevelId(),
             user: userId,
@@ -646,7 +656,8 @@ export default class LevelPlayer extends Phaser.Scene {
             data: JSON.stringify(this.levelJSON),
             minBlocks: this.levelJSON.MinBlocksUsed,
             description: levelDescription,
-            publish:publish
+            publish:publish,
+            tags:tags
           };
           try {
             if(levelData.level_id){
@@ -663,6 +674,8 @@ export default class LevelPlayer extends Phaser.Scene {
             
         });
         }
+        $('#tagSelect').select2({placeholder:"Filter by tags",allowClear:true,dropdownParent: $('#levelCreateModal')
+        });
         createLevelModalInstance.show();
   }
 
