@@ -8,6 +8,7 @@ import { GridPhysics } from './Classes/GridPhysics.js';
 import { Player } from './Classes/Player.js';
 import TrapObject from './Classes/TrapObject.js';
 import { Direction } from './types/Direction.js';
+import * as bootstrap from 'bootstrap';
 import EnemyObject from './Classes/Enemy.js';
 import loadLevelEditor from '../../../SPA/loaders/levelEditorLoader.js';
 import Level from "../../level";
@@ -111,6 +112,9 @@ export default class LevelPlayer extends Phaser.Scene {
     
     document.getElementById("speedModifierBtn").addEventListener("click", this.changeAnimSpeed);
     document.getElementById("editButton").addEventListener("click", this.loadLevelEditor);
+    if(document.getElementById("saveButton")){
+      document.getElementById("saveButton").addEventListener("click", this.saveLevel);
+    }
 
     //Block limits checks
     for(var block in this.blockMap){
@@ -422,26 +426,7 @@ export default class LevelPlayer extends Phaser.Scene {
       this.levelJSON.LoopUsed = this.blockyController.getUsedLoop();
       if (object !== null) {
         console.log(JSON.stringify(this.levelJSON));
-        if (window.confirm("Save Level?")) {
-          // Preguntar al usuario el nombre del nivel
-          const levelName = window.prompt("Ingrese un nombre para el nivel:", "Nombre");
-          const levelDescription= window.prompt("Ingrese una descripción para el nivel:", "");
-          const levelData = {
-            user: object.id,
-            category: null,
-            self: null,
-            title: levelName,
-            data: JSON.stringify(this.levelJSON),
-            minBlocks: this.levelJSON.MinBlocksUsed,
-            description: levelDescription,
-          };
-          try {
-            await fetchRequest(`${API_ENDPOINT}/level/create`, "POST", JSON.stringify(levelData));
-            alert(`Nivel ${levelName} creado exitosamente.`);
-          } catch (error) {
-            alert("Connection to server failed");
-          }
-        }        
+        this.getAppendCreateLevelModal(object.id,true);     
       } else alert("You need to sign in before saving a level");
     }
   };
@@ -470,6 +455,11 @@ export default class LevelPlayer extends Phaser.Scene {
     this.gameSpeed = newVal;
     (e.currentTarget as HTMLDivElement).innerHTML = `${newVal}x`;
     (e.currentTarget as HTMLInputElement).value = `${newVal}`;
+  }
+  
+  private getLevelId() {
+    let params = new URLSearchParams(window.location.search);
+    return params.get("id");
   }
 
   private loadLevelEditor = async () => {
@@ -599,6 +589,99 @@ export default class LevelPlayer extends Phaser.Scene {
     }else check.checked=true;
 
     console.log(JSON.stringify(toolboxContent));
+  }
+
+  private getAppendCreateLevelModal(userId,publish){
+    let createModal= `
+        <div id="levelCreateModal" class="modal fade" tabindex="-1" aria-labelledby="createLevelLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="createLevelLabel">Enter your level data</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="mb-3">
+                                <label for="level_name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="level_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="level_desc" class="form-label" >Description</label>
+                                <textarea class="form-control" size="150" id="level_desc"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tagSelect" class="form-label" >Tags</label>
+                                <select id="tagSelect" name="tags[]" multiple="multiple" style="width: 100%">
+                                  <option value="LP">Loops</option>
+                                  <option value="VR">Variable</option>
+                                  <option value="BS">Basic</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Sumbit" id="level_sumbit">SUMBIT</button>
+                        <span id="text-error-createLevel"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `
+        let createLevel = document.createElement("div");
+        createLevel.innerHTML = createModal;
+        document.body.appendChild(createLevel);
+
+        let createLevelModalElement = document.querySelector("#levelCreateModal");
+        let createLevelModalInstance = new bootstrap.Modal(createLevelModalElement);
+
+        createLevelModalElement.addEventListener("hidden.bs.modal", function () {
+            createLevelModalElement.remove();
+        });
+
+        let sumbitBtn = document.getElementById("level_sumbit");
+        if (sumbitBtn) {
+        sumbitBtn.addEventListener("click", async ()=> {
+          // Preguntar al usuario el nombre del nivel
+          const levelName = (document.getElementById("level_name") as HTMLInputElement).value;
+          const levelDescription= (document.getElementById("level_desc") as HTMLInputElement).value;
+          const selectData=$('#tagSelect').select2('data');
+          const tags=selectData.map(i=>i.text);
+          const levelData = {
+            level_id: this.getLevelId(),
+            user: userId,
+            category: null,
+            self: null,
+            title: levelName,
+            data: JSON.stringify(this.levelJSON),
+            minBlocks: this.levelJSON.MinBlocksUsed,
+            description: levelDescription,
+            publish:publish,
+            tags:tags
+          };
+          try {
+            if(levelData.level_id){
+              await fetchRequest(`${API_ENDPOINT}/level/update`, "POST", JSON.stringify(levelData));
+              alert(`Nivel ${levelName} modificado exitosamente.`);
+            }
+            else{
+              await fetchRequest(`${API_ENDPOINT}/level/create`, "POST", JSON.stringify(levelData));
+              alert(`Nivel ${levelName} creado exitosamente.`);
+            }
+          } catch (error) {
+            alert("Connection to server failed");
+          }
+            
+        });
+        }
+        $('#tagSelect').select2({placeholder:"Filter by tags",allowClear:true,dropdownParent: $('#levelCreateModal')
+        });
+        createLevelModalInstance.show();
+  }
+
+  saveLevel=async ()=>{
+    let cookie=sessionCookieValue();
+    this.getAppendCreateLevelModal(cookie.id,false);
   }
 
   rotate(direction: string) {

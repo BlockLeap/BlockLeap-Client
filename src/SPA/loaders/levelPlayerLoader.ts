@@ -31,6 +31,7 @@ function getLevelPlayerHTML(fromLevelEditor?: boolean) {
               <div id="phaserDiv" class="col col-lg-8 mh-100 p-0 position-relative">
                   <canvas id="phaserCanvas"></canvas>
                   <div class="position-absolute top-0 end-0 mt-2 me-2">
+                        ${getSaveButton(fromLevelEditor)}
                         ${getEditButton(fromLevelEditor)}
                         ${getBlockLimitButton(fromLevelEditor)}
                         <button class="btn btn-warning" id="speedModifierBtn" value="1">
@@ -50,6 +51,13 @@ function getEditButton(fromLevelEditor: boolean) {
     return `<button class="btn btn-primary" id="editButton">
                 <i class="bi ${fromLevelEditor ? "bi-pencil-square" : "bi-copy"}"></i>
             </button>`;
+}
+function getSaveButton(fromLevelEditor: boolean) {
+    return fromLevelEditor ? 
+        `<button class="btn btn-primary" id="saveButton">
+            <i class="bi bi-archive"></i>
+        </button>` 
+        : "";
 }
 function getBlockLimitButton(fromLevelEditor: boolean) {
     
@@ -133,7 +141,9 @@ function getBlockLimitMenu(fromLevelEditor: boolean) {
         </div>
     </div>` 
     return fromLevelEditor ? menu:'';
-}                              
+}
+
+
 /**
  * Fetches a level by its ID and starts it
  * @param {String} id - The ID of the level to start

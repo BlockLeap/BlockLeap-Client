@@ -780,7 +780,6 @@ async function useRegister(modal : bootstrap.Modal):Promise<any> {
   }
 }
 
-
 async function loadPagination(event) {
   event.preventDefault();
   const anchorTag = event.target.closest("a.getPage");   
