@@ -780,6 +780,85 @@ async function useRegister(modal : bootstrap.Modal):Promise<any> {
   }
 }
 
+
+async function loadPagination(event) {
+  event.preventDefault();
+  const anchorTag = event.target.closest("a.getPage");   
+  const ruta = anchorTag.href.split("level/class/")[1];
+  const id=ruta.split("/page/")[0];
+  const page=ruta.split("/page/")[1];
+
+  history.pushState({page}, "", `class?page=${page}`);
+  loadLevels(id,page);
+
+}
+
+async function loadLevels(id,page){
+  
+  const divElement = document.getElementById("categories");
+  const res = await fetchRequest(
+    `${API_ENDPOINT}/level/class/${id}/page/${page}`,
+    "GET"
+  );
+    const levels=res.levels;
+    const levelCount=res.count;
+    const levelsWithStatistics = await loadLevelStats(levels);
+    let totalPages=(levelCount/itemsPerPage);if((levelCount%itemsPerPage)!=0)totalPages++;
+    await fillContent(divElement, levelsWithStatistics, generateLevelDiv);
+    loadPageNav(id,totalPages,page);
+    // Add getLevel event listener
+    document.querySelectorAll("a.getLevel").forEach((level) => {
+      level.addEventListener("click", playLevel);
+    });
+    document.querySelectorAll("a.getPage").forEach((page) => {
+      page.addEventListener("click", loadPagination);
+    });
+}
+
+async function loadLevelStats(levels){
+  const cookie = sessionCookieValue();
+
+  let statistics = [];
+  if (cookie !== null) {
+    statistics = await fetchRequest(
+      `${API_ENDPOINT}/play/communityStatistics?user=${cookie.id}/`,
+      "GET"
+    );
+  }
+  const statisticsMap = statistics.reduce((map, statistic) => {
+    map[statistic.level] = {
+      stars: statistic.stars,
+      attempts: statistic.attempts,
+    };
+    return map;
+  }, {});
+
+  const levelsWithStatistics = levels.map((level) => {
+    const levelId = level.id;
+    const statistic = statisticsMap[levelId];
+    return {
+      ...level,
+      statistics: statistic || { stars: 0, attempts: 0 },
+    };
+  });
+  return levelsWithStatistics;
+}
+
+async function loadPageNav(classId,pages,currentPage){
+
+  const list= document.getElementById("paginationList");
+  let items='';
+  for(let i=1; i<=pages;i++){
+    if(i==currentPage)
+      items+=`<li class="page-item"><a class="page-link active getPage" href="${API_ENDPOINT}/level/class/${classId}/page/${i}">${i}</a></li>`
+    else
+      items+=`<li class="page-item"><a class="page-link getPage" href="${API_ENDPOINT}/level/class/${classId}/page/${i}">${i}</a></li>`
+  }
+  list.innerHTML=items;
+
+  
+}
+
 export async function loadClassProfesor(id,page='1') {
 
   const classId = await fetchRequest(
@@ -819,10 +898,12 @@ export async function loadClassProfesor(id,page='1') {
 
    
 
-      const levels = await fetchRequest(
-        `${API_ENDPOINT}/level/class/${id}`,
+      const res = await fetchRequest(
+        `${API_ENDPOINT}/level/class/${id}/page/${page}`,
         "GET"
       );
+      const levels=res.levels;
+      const levelCount=res.count;
       const sets = await fetchRequest(
         `${API_ENDPOINT}/level/class/${id}/sets`,
         "GET"
@@ -866,9 +947,23 @@ export async function loadClassProfesor(id,page='1') {
             await fillContent(divElement, levelsWithStatistics, generateLevelDiv);
  
 
+            /*
+            let totalPages=(levels.length/itemsPerPage);if((levels.length%itemsPerPage)!=0)totalPages++;
+            loadPageNav(totalPages,page);
+            
+            document.querySelectorAll("a.getPage").forEach((page) => {
+              page.addEventListener("click", loadPagination);
+            });
+            */
+            let totalPages=(levelCount/itemsPerPage);if((levelCount%itemsPerPage)!=0)totalPages++;
+            // Add getLevel event listener
+            loadPageNav(id,totalPages,page);
             // Add getLevel event listener
             document.querySelectorAll("a.getLevel").forEach((level) => {
               level.addEventListener("click", playLevel);
+            });
+            document.querySelectorAll("a.getPage").forEach((page) => {
+              page.addEventListener("click", loadPagination);
             });
           } else{
             document.getElementById("content").innerHTML = getRowHTML3(classId);
@@ -962,10 +1057,12 @@ export default async function loadClass(id,page = '1') {
   try {
     const cookie = sessionCookieValue();
     if((cookie !== null)){
-      const levels = await fetchRequest(
-        `${API_ENDPOINT}/level/class/${id}`,
+      const res = await fetchRequest(
+        `${API_ENDPOINT}/level/class/${id}/page/${page}`,
         "GET"
       );
+      const levels=res.levels;
+      const levelCount=res.count;
       const sets = await fetchRequest(
         `${API_ENDPOINT}/level/class/${id}/sets`,
         "GET"
@@ -996,10 +1093,14 @@ export default async function loadClass(id,page = '1') {
             });
 
             await fillContent(divElement, levelsWithStatistics, generateLevelDiv);
-
+            let totalPages=(levelCount/itemsPerPage);if((levelCount%itemsPerPage)!=0)totalPages++;
+            loadPageNav(id,totalPages,page);
             // Add getLevel event listener
             document.querySelectorAll("a.getLevel").forEach((level) => {
               level.addEventListener("click", playLevel);
+            });
+            document.querySelectorAll("a.getPage").forEach((page) => {
+              page.addEventListener("click", loadPagination);
             });
           } else{
             document.getElementById("content").innerHTML = getRowHTML3(classId);

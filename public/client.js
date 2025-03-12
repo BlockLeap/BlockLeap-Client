@@ -253038,7 +253038,7 @@ async function loadWaitingRoom() {
 }
 
 const API_ENDPOINT$6 = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.API_PORT}/api`;
-const itemsPerPage = 6;
+const itemsPerPage$1 = 6;
 /**
  *
  * @returns String of HTMLDivElement for showing levels/categories
@@ -253098,7 +253098,7 @@ function generateCommunityDivPlaceholder$1() {
               </div>
           </div>`;
 }
-async function loadLevelStats(levels) {
+async function loadLevelStats$1(levels) {
     const cookie = sessionCookieValue();
     let statistics = [];
     if (cookie !== null) {
@@ -253165,14 +253165,14 @@ async function generateLevelDiv$3(level) {
       </div>
     </div>`;
 }
-async function loadPagination(event) {
+async function loadPagination$1(event) {
     event.preventDefault();
     const anchorTag = event.target.closest("a.getPage");
     const page = anchorTag.href.split("level/community/levels/")[1];
     history.pushState({ page }, "", `community?page=${page}`);
-    loadLevels(page);
+    loadLevels$1(page);
 }
-async function loadPageNav(pages, currentPage) {
+async function loadPageNav$1(pages, currentPage) {
     const list = document.getElementById("paginationList");
     let items = '';
     for (let i = 1; i <= pages; i++) {
@@ -253184,27 +253184,27 @@ async function loadPageNav(pages, currentPage) {
     list.innerHTML = items;
 }
 async function filterSearch() {
-    loadLevels(1);
+    loadLevels$1(1);
 }
-async function loadLevels(page) {
+async function loadLevels$1(page) {
     const divElement = document.getElementById("categories");
     const selectData = $('#levelSelect').select2('data');
     const map = selectData.map(i => i.text);
     let data = { page: page, tags: map };
     const res = await fetchRequest(`${API_ENDPOINT$6}/level/community/levels/${JSON.stringify(data)}`, "GET");
     const levels = res.rows;
-    const levelsWithStatistics = await loadLevelStats(levels);
-    let totalPages = (res.count / itemsPerPage);
-    if ((res.count % itemsPerPage) != 0)
+    const levelsWithStatistics = await loadLevelStats$1(levels);
+    let totalPages = (res.count / itemsPerPage$1);
+    if ((res.count % itemsPerPage$1) != 0)
         totalPages++;
     await fillContent(divElement, levelsWithStatistics, generateLevelDiv$3);
-    loadPageNav(totalPages, page);
+    loadPageNav$1(totalPages, page);
     // Add getLevel event listener
     document.querySelectorAll("a.getLevel").forEach((level) => {
         level.addEventListener("click", playLevel$3);
     });
     document.querySelectorAll("a.getPage").forEach((page) => {
-        page.addEventListener("click", loadPagination);
+        page.addEventListener("click", loadPagination$1);
     });
 }
 /**
@@ -253226,7 +253226,7 @@ async function loadCommunity(page = '1') {
     $('#levelSelect').select2({ placeholder: "Filter by tags", allowClear: true });
     $('#filterButton').on("click", filterSearch);
     try {
-        loadLevels(page);
+        loadLevels$1(page);
     }
     catch (error) {
         if (error.status === 503) { // Offline mode
@@ -253573,6 +253573,7 @@ async function loadSetById(id) {
     }
 }
 
+const itemsPerPage = 6;
 const API_ENDPOINT$4 = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.API_PORT}/api`;
 /**
  *
@@ -254202,6 +254203,68 @@ async function useRegister$1(modal) {
         console.error('Error general:', error);
     }
 }
+async function loadPagination(event) {
+    event.preventDefault();
+    const anchorTag = event.target.closest("a.getPage");
+    const ruta = anchorTag.href.split("level/class/")[1];
+    const id = ruta.split("/page/")[0];
+    const page = ruta.split("/page/")[1];
+    history.pushState({ page }, "", `class?page=${page}`);
+    loadLevels(id, page);
+}
+async function loadLevels(id, page) {
+    const divElement = document.getElementById("categories");
+    const res = await fetchRequest(`${API_ENDPOINT$4}/level/class/${id}/page/${page}`, "GET");
+    const levels = res.levels;
+    const levelCount = res.count;
+    const levelsWithStatistics = await loadLevelStats(levels);
+    let totalPages = (levelCount / itemsPerPage);
+    if ((levelCount % itemsPerPage) != 0)
+        totalPages++;
+    await fillContent(divElement, levelsWithStatistics, generateLevelDiv$1);
+    loadPageNav(id, totalPages, page);
+    // Add getLevel event listener
+    document.querySelectorAll("a.getLevel").forEach((level) => {
+        level.addEventListener("click", playLevel$1);
+    });
+    document.querySelectorAll("a.getPage").forEach((page) => {
+        page.addEventListener("click", loadPagination);
+    });
+}
+async function loadLevelStats(levels) {
+    const cookie = sessionCookieValue();
+    let statistics = [];
+    if (cookie !== null) {
+        statistics = await fetchRequest(`${API_ENDPOINT$4}/play/communityStatistics?user=${cookie.id}/`, "GET");
+    }
+    const statisticsMap = statistics.reduce((map, statistic) => {
+        map[statistic.level] = {
+            stars: statistic.stars,
+            attempts: statistic.attempts,
+        };
+        return map;
+    }, {});
+    const levelsWithStatistics = levels.map((level) => {
+        const levelId = level.id;
+        const statistic = statisticsMap[levelId];
+        return {
+            ...level,
+            statistics: statistic || { stars: 0, attempts: 0 },
+        };
+    });
+    return levelsWithStatistics;
+}
+async function loadPageNav(classId, pages, currentPage) {
+    const list = document.getElementById("paginationList");
+    let items = '';
+    for (let i = 1; i <= pages; i++) {
+        if (i == currentPage)
+            items += `<li class="page-item"><a class="page-link active getPage" href="${API_ENDPOINT$4}/level/class/${classId}/page/${i}">${i}</a></li>`;
+        else
+            items += `<li class="page-item"><a class="page-link getPage" href="${API_ENDPOINT$4}/level/class/${classId}/page/${i}">${i}</a></li>`;
+    }
+    list.innerHTML = items;
+}
 async function loadClassProfesor(id, page = '1') {
     const classId = await fetchRequest(`${API_ENDPOINT$4}/group/${id}`, "GET");
     const classCode = await fetchRequest(`${API_ENDPOINT$4}/group/findByCode/${id}`, "GET");
@@ -254215,7 +254278,9 @@ async function loadClassProfesor(id, page = '1') {
     try {
         const cookie = sessionCookieValue();
         if ((cookie !== null)) {
-            const levels = await fetchRequest(`${API_ENDPOINT$4}/level/class/${id}`, "GET");
+            const res = await fetchRequest(`${API_ENDPOINT$4}/level/class/${id}/page/${page}`, "GET");
+            const levels = res.levels;
+            const levelCount = res.count;
             const sets = await fetchRequest(`${API_ENDPOINT$4}/level/class/${id}/sets`, "GET");
             const userLevels = await fetchRequest(`${API_ENDPOINT$4}/level/userLevels/${cookie.id}`, "GET");
             const userSets = await fetchRequest(`${API_ENDPOINT$4}/set/userSets/${cookie.id}`, "GET");
@@ -254240,9 +254305,25 @@ async function loadClassProfesor(id, page = '1') {
                             };
                         });
                         await fillContent(divElement, levelsWithStatistics, generateLevelDiv$1);
+                        /*
+                        let totalPages=(levels.length/itemsPerPage);if((levels.length%itemsPerPage)!=0)totalPages++;
+                        loadPageNav(totalPages,page);
+                        
+                        document.querySelectorAll("a.getPage").forEach((page) => {
+                          page.addEventListener("click", loadPagination);
+                        });
+                        */
+                        let totalPages = (levelCount / itemsPerPage);
+                        if ((levelCount % itemsPerPage) != 0)
+                            totalPages++;
+                        // Add getLevel event listener
+                        loadPageNav(id, totalPages, page);
                         // Add getLevel event listener
                         document.querySelectorAll("a.getLevel").forEach((level) => {
                             level.addEventListener("click", playLevel$1);
+                        });
+                        document.querySelectorAll("a.getPage").forEach((page) => {
+                            page.addEventListener("click", loadPagination);
                         });
                     }
                     else {
@@ -254323,7 +254404,9 @@ async function loadClass(id, page = '1') {
     try {
         const cookie = sessionCookieValue();
         if ((cookie !== null)) {
-            const levels = await fetchRequest(`${API_ENDPOINT$4}/level/class/${id}`, "GET");
+            const res = await fetchRequest(`${API_ENDPOINT$4}/level/class/${id}/page/${page}`, "GET");
+            const levels = res.levels;
+            const levelCount = res.count;
             const sets = await fetchRequest(`${API_ENDPOINT$4}/level/class/${id}/sets`, "GET");
             if (levels != null || sets != null) {
                 if (levels.length != 0 || sets.length != 0) {
@@ -254346,9 +254429,16 @@ async function loadClass(id, page = '1') {
                             };
                         });
                         await fillContent(divElement, levelsWithStatistics, generateLevelDiv$1);
+                        let totalPages = (levelCount / itemsPerPage);
+                        if ((levelCount % itemsPerPage) != 0)
+                            totalPages++;
+                        loadPageNav(id, totalPages, page);
                         // Add getLevel event listener
                         document.querySelectorAll("a.getLevel").forEach((level) => {
                             level.addEventListener("click", playLevel$1);
+                        });
+                        document.querySelectorAll("a.getPage").forEach((page) => {
+                            page.addEventListener("click", loadPagination);
                         });
                     }
                     else {
