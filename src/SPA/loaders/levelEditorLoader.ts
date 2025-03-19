@@ -47,6 +47,6 @@ export default function loadLevelEditor(levelJSON?: Level.Level) {
     document.getElementById("content").innerHTML = getLevelEditorHTML();
     const cookie = sessionCookieValue();
     if(!cookie)
-        alert("Inicia sesin para poder guardar niveles")
+        alert("Inicia sesion para poder guardar niveles")
     PhaserController.init("LevelEditor", LevelEditor, { levelJSON });
 }

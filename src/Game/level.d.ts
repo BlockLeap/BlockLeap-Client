@@ -1,11 +1,16 @@
 declare namespace Level {
     interface Level {
         LoopUsed: boolean;
+        variableUsed: boolean;
         MinBlocksUsed: number;
         phaser: Phaser;
         blockly: Blockly;
+        firstStar: string;
+        secondStar: string;
+        thirdStar: string;
     }
 
+   
     interface Phaser {
         width: number;
         height: number;

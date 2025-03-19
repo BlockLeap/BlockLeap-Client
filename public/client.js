@@ -255176,7 +255176,7 @@ function loadLevelEditor(levelJSON) {
     document.getElementById("content").innerHTML = getLevelEditorHTML();
     const cookie = sessionCookieValue();
     if (!cookie)
-        alert("Inicia sesin para poder guardar niveles");
+        alert("Inicia sesion para poder guardar niveles");
     PhaserController.init("LevelEditor", LevelEditor, { levelJSON });
 }
 
@@ -255193,7 +255193,6 @@ class LevelPlayer extends phaserExports.Scene {
     mapCoordY;
     scaleFactor;
     blockyController;
-    loopUsed = false;
     blockMap = { "movement": "Actions", "math_number": "Numbers", "for_X_times": "Loops", "changeStatus": "Actions", "variables_set": "Variables", "variables_get": "Variables",
         "math_change": "Variables" };
     players = [];
@@ -255468,53 +255467,71 @@ class LevelPlayer extends phaserExports.Scene {
             else { // ESTRELLAS
                 let loopAct = this.blockyController.getUsedLoop();
                 let blocksUsed = this.blockyController.getUsedBlocks();
-                if (this.totalCofres >= 3) {
-                    if (this.levelJSON.LoopUsed) { // ha usado un loop, una estrella
-                        if (loopAct)
-                            stars++; // si se usa loop una estrella por eso, resto de cosas solo se pueden repartir dos estrellas
+                let variablesUsed = this.blockyController.getUsedVariable();
+                if (this.levelJSON.LoopUsed && this.levelJSON.variableUsed) { // ha usado un loop y variable, una estrella a repartir solo 
+                    if (loopAct)
+                        stars++; // si se usa loop una estrella por eso, resto de cosas solo se pueden repartir 1 estrella
+                    if (variablesUsed)
+                        stars++; // igual para si se usa la variable
+                    if (this.totalCofres > 0) {
                         const cofresRecogidos = this.players.reduce((acc, player) => acc + player.getCollectedChest(), 0);
-                        const estrellasPorCofres = Math.floor((cofresRecogidos / this.totalCofres) * 2); // Proporcional a cofres recogidos
+                        const estrellasPorCofres = Math.floor((cofresRecogidos / this.totalCofres)); // Proporcional a cofres recogidos
                         stars += estrellasPorCofres;
                     }
-                    else {
-                        const cofresRecogidos = this.players.reduce((acc, player) => acc + player.getCollectedChest(), 0);
-                        const estrellasPorCofres = Math.floor((cofresRecogidos / this.totalCofres) * 3); // Proporcional a cofres recogidos
-                        stars += estrellasPorCofres;
-                    }
+                    else if (this.levelJSON.MinBlocksUsed >= blocksUsed)
+                        stars++; // si se han usado menos bloques que el minimo
                 }
-                else if (this.totalCofres <= 2) { //2 o menos cofres
-                    if (this.levelJSON.LoopUsed) {
-                        if (loopAct)
-                            stars++;
-                        if (this.totalCofres === 1) {
-                            if (blocksUsed <= this.levelJSON.MinBlocksUsed)
-                                stars++;
-                        }
-                        else if (this.totalCofres === 0) {
-                            if (blocksUsed <= this.levelJSON.MinBlocksUsed + 2)
-                                stars++;
-                            if (blocksUsed <= this.levelJSON.MinBlocksUsed)
-                                stars++;
-                        }
-                    }
-                    else { // dos o menos cofres y no se usa loop, se tiene en cuenta el min block used
-                        if (this.totalCofres === 2) {
-                            if (blocksUsed <= this.levelJSON.MinBlocksUsed)
-                                stars++;
-                        }
-                        else if (this.totalCofres === 1) {
-                            if (blocksUsed <= this.levelJSON.MinBlocksUsed + 2)
-                                stars++;
-                            if (blocksUsed <= this.levelJSON.MinBlocksUsed)
-                                stars++;
+                else {
+                    if (this.totalCofres >= 3) {
+                        if (this.levelJSON.variableUsed || this.levelJSON.LoopUsed) { // ha usado un loop o variable no ambas, una estrella
+                            if (variablesUsed || loopAct)
+                                stars++; // si se usa loop o var una estrella por eso, resto de cosas solo se pueden repartir dos estrellas
+                            const cofresRecogidos = this.players.reduce((acc, player) => acc + player.getCollectedChest(), 0);
+                            const estrellasPorCofres = Math.floor((cofresRecogidos / this.totalCofres) * 2); // Proporcional a cofres recogidos
+                            stars += estrellasPorCofres;
                         }
                         else {
-                            if (!playerBounced)
-                                stars++; // no se ha chocado 
-                            if (blocksUsed <= this.levelJSON.MinBlocksUsed + 2)
-                                stars++; // numero de movimientos eficiente
-                            if (blocksUsed <= this.levelJSON.MinBlocksUsed)
+                            const cofresRecogidos = this.players.reduce((acc, player) => acc + player.getCollectedChest(), 0);
+                            const estrellasPorCofres = Math.floor((cofresRecogidos / this.totalCofres) * 3); // Proporcional a cofres recogidos
+                            stars += estrellasPorCofres;
+                        }
+                    }
+                    else if (this.totalCofres <= 2) { //2 o menos cofres
+                        if (this.levelJSON.LoopUsed || this.levelJSON.variableUsed) { // ha usado un loop o variable, 2 estrellas a repartir
+                            if (loopAct)
                                 stars++;
+                            else if (variablesUsed)
+                                stars++;
+                            else if (this.totalCofres === 1) {
+                                if (blocksUsed <= this.levelJSON.MinBlocksUsed)
+                                    stars++;
+                            }
+                            else if (this.totalCofres === 0) {
+                                if (blocksUsed <= this.levelJSON.MinBlocksUsed + 2)
+                                    stars++;
+                                if (blocksUsed <= this.levelJSON.MinBlocksUsed)
+                                    stars++;
+                            }
+                        }
+                        else { // dos o menos cofres y no se usa loop, se tiene en cuenta el min block used
+                            if (this.totalCofres === 2) {
+                                if (blocksUsed <= this.levelJSON.MinBlocksUsed)
+                                    stars++;
+                            }
+                            else if (this.totalCofres === 1) {
+                                if (blocksUsed <= this.levelJSON.MinBlocksUsed + 2)
+                                    stars++;
+                                if (blocksUsed <= this.levelJSON.MinBlocksUsed)
+                                    stars++;
+                            }
+                            else {
+                                if (!playerBounced)
+                                    stars++; // no se ha chocado 
+                                if (blocksUsed <= this.levelJSON.MinBlocksUsed + 2)
+                                    stars++; // numero de movimientos eficiente
+                                if (blocksUsed <= this.levelJSON.MinBlocksUsed)
+                                    stars++;
+                            }
                         }
                     }
                     const cofresRecogidos = this.players.reduce((acc, player) => acc + player.getCollectedChest(), 0);
@@ -255535,14 +255552,79 @@ class LevelPlayer extends phaserExports.Scene {
         else {
             if (hasLost) {
                 const event = new CustomEvent("lose");
-                document.dispatchEvent(event);
-            }
+                document.dispatchEvent(event);            }
             else {
                 //save level if its in the editor
                 // From Level Editor
                 const object = sessionCookieValue();
                 this.levelJSON.MinBlocksUsed = this.blockyController.getUsedBlocks();
                 this.levelJSON.LoopUsed = this.blockyController.getUsedLoop();
+                this.levelJSON.variableUsed = this.blockyController.getUsedVariable();
+                if (this.levelJSON.LoopUsed && this.levelJSON.variableUsed) { // ha usado un loop y variable
+                    this.levelJSON.firstStar = "Use a loop";
+                    this.levelJSON.secondStar = "Use a variable";
+                    if (this.totalCofres > 0) {
+                        this.levelJSON.thirdStar = "Collect all chests";
+                    }
+                    else {
+                        this.levelJSON.thirdStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
+                    }
+                }
+                else {
+                    if (this.totalCofres >= 3) {
+                        if (this.levelJSON.variableUsed || this.levelJSON.LoopUsed) { // ha usado un loop o variable no ambas, una estrella
+                            if (this.levelJSON.variableUsed) {
+                                this.levelJSON.firstStar = "Use a variable";
+                            }
+                            else if (this.levelJSON.LoopUsed) {
+                                this.levelJSON.firstStar = "Use a loop";
+                            }
+                        }
+                        else {
+                            this.levelJSON.firstStar = "Collect the maximum amount of chests";
+                        }
+                    }
+                    else if (this.totalCofres <= 2) { //2 o menos cofres
+                        if (this.levelJSON.LoopUsed || this.levelJSON.variableUsed) { // ha usado un loop o variable, 2 estrellas a repartir
+                            this.levelJSON.secondStar = "Collect a chest";
+                            this.levelJSON.thirdStar = "Collect a chest";
+                            if (this.levelJSON.variableUsed) {
+                                this.levelJSON.firstStar = "Use a variable";
+                            }
+                            else if (this.levelJSON.LoopUsed) {
+                                this.levelJSON.firstStar = "Use a loop";
+                            }
+                            else if (this.totalCofres === 1) {
+                                this.levelJSON.secondStar = "Collect the chest";
+                                this.levelJSON.thirdStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
+                            }
+                            else if (this.totalCofres === 0) {
+                                this.levelJSON.secondStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
+                                const newMinBlocks = this.levelJSON.MinBlocksUsed + 2;
+                                this.levelJSON.thirdStar = "Use " + newMinBlocks + " or less blocks";
+                            }
+                        }
+                        else { // dos o menos cofres y no se usa loop, se tiene en cuenta el min block used
+                            if (this.totalCofres === 2) {
+                                this.levelJSON.firstStar = "Collect a chest";
+                                this.levelJSON.secondStar = "Collect a chest";
+                                this.levelJSON.thirdStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
+                            }
+                            else if (this.totalCofres === 1) {
+                                this.levelJSON.firstStar = "Collect the chest";
+                                this.levelJSON.secondStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
+                                const newMinBlocks = this.levelJSON.MinBlocksUsed + 2;
+                                this.levelJSON.thirdStar = "Use " + newMinBlocks + " or less blocks";
+                            }
+                            else {
+                                this.levelJSON.firstStar = "Don't bounce";
+                                this.levelJSON.secondStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
+                                const newMinBlocks = this.levelJSON.MinBlocksUsed + 2;
+                                this.levelJSON.thirdStar = "Use " + newMinBlocks + " or less blocks";
+                            }
+                        }
+                    }
+                }
                 if (object !== null) {
                     console.log(JSON.stringify(this.levelJSON));
                     if (window.confirm("Save Level?")) {
@@ -258531,10 +258613,41 @@ function getLevelPlayerHTML(fromLevelEditor) {
                             <i class="bi bi-question"></i>
                         </button>
                   </div>
+                  <div style="position: absolute; top: 3%; right: 5%; margin-top: 60px; margin-right: 0px; background: #833c51; color: white; border: 2px solid #ffc107; border-radius: 10px; width: 150px; padding: 10px; font-size: 14px;">
+					<h2 style="background: #ffc107; color: black; font-size: 12px; text-align: center; padding: 5px; margin: -10px -10px 10px -10px; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                    COLLECT ALL STARS:</h2>
+					<ul>
+                        ${currentLevelJSON.firstStar ? `<li><i class="bi bi-star-fill"></i>${currentLevelJSON.firstStar}</li>` : ""}
+
+					</ul>
+				</div>
               </div>
             </div>
             ${getBlockLimitMenu(fromLevelEditor)}`;
 }
+// function getStarsList(loopUsed: boolean, variableUsed: boolean, minBlocksUsed: number) {
+//     const starsList = [null, null, null];
+//     let loop : boolean = true;
+//     let variable : boolean = true;
+//     let minBlocks : number;
+//     let chest : number ;
+//     for( var i in starsList) {
+//         if(loopUsed && loop) {
+//             starsList[i] = "Use a loop to get a star";
+//             loop = false;
+//         }
+//         else if(variableUsed && variable) {
+//             starsList[i] = "Use a variable to get a star";
+//             variable = false;
+//         }
+//         else if(this.levelJSON.phaser.layers.objects ==="chest") {
+//             starsList[i] = "collect chests to get more stars";
+//             if(this.levelJSON.phaser.layers.objects >1){0}
+//         }
+//         else if(minBlocksUsed > 0) {
+//         }
+//     }
+// }
 function getEditButton(fromLevelEditor) {
     return `<button class="btn btn-primary" id="editButton">
                 <i class="bi ${fromLevelEditor ? "bi-pencil-square" : "bi-copy"}"></i>
@@ -258725,6 +258838,7 @@ const BLOCK_OFFSET = 50;
 class BlocklyController {
     static usedLoop = false;
     static numBlocksUsed = 0;
+    static variableUsed = false;
     static startBlock;
     static workspace;
     static code;
@@ -258951,6 +259065,9 @@ class BlocklyController {
     }
     getUsedBlocks() {
         return BlocklyController.numBlocksUsed;
+    }
+    getUsedVariable() {
+        return BlocklyController.variableUsed;
     }
 }
 

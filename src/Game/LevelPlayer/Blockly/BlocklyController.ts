@@ -22,6 +22,7 @@ export default class BlocklyController {
  
   private static usedLoop: boolean = false;
   private static numBlocksUsed: number = 0;
+  private static variableUsed: boolean = false;
   private static startBlock: Blockly.BlockSvg;
   private static workspace: Blockly.WorkspaceSvg;
   private static code: BlockCode[];
@@ -272,4 +273,8 @@ export default class BlocklyController {
   public getUsedBlocks(): number {
     return BlocklyController.numBlocksUsed;
     }
+
+  public getUsedVariable(): boolean {
+    return BlocklyController.variableUsed;
+  }
 }
