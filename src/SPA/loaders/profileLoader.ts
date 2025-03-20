@@ -35,6 +35,7 @@ function getRowHTML2() {
   return `<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">TUS NIVELES</h2>
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="levels"></div>
+           <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2 w-75 mx-auto" id="display"></div>
   `;
 }
 
@@ -570,6 +571,7 @@ export default async function loadProfile() {
       `${API_ENDPOINT}/user/totalStars/${user.id}`,
       "GET"
     );
+
     const userLevels = await fetchRequest(
       `${API_ENDPOINT}/level/userLevels/${user.id}`,
       "GET"
