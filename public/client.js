@@ -245106,522 +245106,6 @@ class TrapObject extends ArticodingSprite {
     }
 }
 
-var MovementOrientation;
-(function (MovementOrientation) {
-    MovementOrientation["Horizontal"] = "horizontal";
-    MovementOrientation["Vertical"] = "vertical";
-})(MovementOrientation || (MovementOrientation = {}));
-class EnemyObject extends ArticodingSprite {
-    isAlive = true;
-    currentDirection;
-    movementOrientation;
-    gridPhysics;
-    constructor(scene, tileX, tileY, texture, movementOrientation) {
-        super(scene, tileX, tileY, texture);
-        this.scene = scene;
-        this.scene.add.existing(this);
-        this.gridPhysics = this.scene.getGridPhysics();
-        this.movementOrientation = MovementOrientation[movementOrientation];
-        if (!this.movementOrientation)
-            this.movementOrientation = MovementOrientation.Vertical;
-        if (this.movementOrientation == MovementOrientation.Vertical)
-            this.currentDirection = Direction.DOWN;
-        else
-            this.currentDirection = Direction.RIGHT;
-        document.addEventListener("move", this.move);
-    }
-    collide(player) {
-    }
-    move = () => {
-        if (!this.isAlive)
-            return;
-        // TODO: play anims
-        if (this.gridPhysics.isBlockingDirection(this.getTilePos(), this.currentDirection)) {
-            // Running anim
-            // this.anims.play(`enemy_${this.currentDirection}`);
-            this.bounceTween(this.currentDirection);
-            this.changeDirection();
-        }
-        else {
-            // this.anims.play(`enemy_${this.currentDirection}`);
-            this.moveTween();
-        }
-    };
-    changeDirection() {
-        if (this.currentDirection === Direction.DOWN || this.currentDirection === Direction.UP)
-            this.currentDirection = (this.currentDirection === Direction.DOWN ? Direction.UP : Direction.DOWN);
-        else
-            this.currentDirection = (this.currentDirection === Direction.LEFT ? Direction.RIGHT : Direction.LEFT);
-    }
-    bounceTween(direction) {
-        const pixelsToMove = config.TILE_SIZE / 2 * this.scene.getScaleFactor();
-        const movementDistance = this.gridPhysics.getMovementDistance(direction, pixelsToMove);
-        const newPlayerPos = this.getBottomCenter().add(movementDistance);
-        const speedModifier = parseInt(document.getElementById("speedModifierBtn").value);
-        this.scene.tweens.add({
-            targets: this,
-            x: newPlayerPos.x,
-            y: newPlayerPos.y,
-            duration: config.MOVEMENT_ANIMDURATION / 2 / speedModifier,
-            ease: "Sine.inOut",
-            yoyo: true,
-            onComplete: this.stopMoving.bind(this)
-        });
-    }
-    // TODO: Stop anims
-    stopMoving() {
-        // this.anims.stop();
-        // Set new idle frame
-        // this.setFrame(0);
-        this.gridPhysics.collide(this);
-    }
-    moveTween() {
-        const pixelsToMove = config.TILE_SIZE * this.scene.getScaleFactor();
-        const movementDistance = this.gridPhysics.getMovementDistance(this.currentDirection, pixelsToMove);
-        const newPosition = this.getBottomCenter().add(movementDistance);
-        this.updateTilePos();
-        const speedModifier = parseInt(document.getElementById("speedModifierBtn").value);
-        this.scene.tweens.add({
-            targets: this,
-            x: newPosition.x,
-            y: newPosition.y,
-            duration: config.MOVEMENT_ANIMDURATION / speedModifier,
-            ease: "Sine.inOut",
-            onComplete: this.stopMoving.bind(this)
-        });
-    }
-    updateTilePos() {
-        const movementVector = this.gridPhysics.getMovementVector(this.currentDirection);
-        this.setTilePos(this.getTilePos().add(movementVector));
-    }
-    setTilePos(tilePosition) {
-        this.tileX = tilePosition.x;
-        this.tileY = tilePosition.y;
-    }
-    getTilePos() {
-        return new phaserExports.Math.Vector2(this.tileX, this.tileY);
-    }
-    kill() {
-        this.isAlive = false;
-        this.destroy();
-    }
-    destroy(fromScene) {
-        document.removeEventListener("move", this.move);
-        super.destroy(fromScene);
-    }
-}
-
-class DropZoneTile extends phaserExports.GameObjects.Zone {
-    //owned sprite:
-    bgSprite;
-    //owned object:
-    objectSprite;
-    // graphics:
-    graphics;
-    constructor(scene, x, y, width, height) {
-        super(scene, x, y, width, height);
-        this.setRectangleDropZone(width, height);
-        this.graphics = this.scene.add.graphics();
-        this.graphics.lineStyle(2, 0xffff00);
-        this.graphics.strokeRect(this.x - this.input.hitArea.width / 2, this.y - this.input.hitArea.height / 2, this.input.hitArea.width, this.input.hitArea.height);
-        this.scene.add.existing(this);
-        this.on("pointerdown", this.clickEvent);
-        this.on('pointerover', this.pointerOverEvent);
-    }
-    pointerOverEvent(pointer) {
-        if (pointer.leftButtonDown())
-            this.clickEvent();
-    }
-    clickEvent() {
-        const selectedTool = (document.querySelector('input[name="editor-tool"]:checked'))?.id;
-        if (selectedTool === "paintbrush") {
-            this.paintIcon();
-        }
-        else if (selectedTool === "eraser") {
-            this.deleteIcon();
-        }
-    }
-    paintIcon() {
-        const icon = (this.scene).getSelectedIcon();
-        if (icon.texture === undefined)
-            return;
-        const scaleFactor = this.width / config.TILE_SIZE;
-        const sprite = this.scene.add.sprite(this.x, this.y, icon.texture, icon.frame);
-        sprite.setScale(scaleFactor);
-        if (icon.texture === "background") {
-            this.setBgSprite(sprite);
-        }
-        else {
-            this.setObjectSprite(sprite);
-        }
-    }
-    deleteIcon() {
-        if (this.objectSprite) {
-            this.objectSprite.destroy(true);
-            this.objectSprite = undefined;
-        }
-        else {
-            this.bgSprite?.destroy(true);
-            this.bgSprite = undefined;
-        }
-    }
-    resize(x, y, width, height) {
-        this.setPosition(x, y);
-        this.setSize(width, height);
-        //setRectangleDropZone tal vez de error
-        this.setRectangleDropZone(width, height);
-    }
-    getBgSprite() {
-        return this.bgSprite;
-    }
-    contains(x, y) {
-        const left = this.x;
-        const right = this.x + this.width;
-        const top = this.y;
-        const bottom = this.y + this.height;
-        return x >= left && x <= right && y >= top && y <= bottom;
-    }
-    getObjectSprite() {
-        return this.objectSprite;
-    }
-    setObjectSprite(sprite) {
-        this.objectSprite?.destroy(true);
-        if (this.bgSprite !== undefined) {
-            // Create duplicate sprite only if has background
-            this.objectSprite = sprite;
-            this.objectSprite.setDepth(this.depth + 2);
-        }
-        else {
-            // Destroy sprite
-            sprite.destroy(true);
-        }
-    }
-    setBgSprite(sprite) {
-        this.objectSprite?.destroy(true); // destroy if existed
-        this.objectSprite = undefined;
-        this.bgSprite?.destroy(true); // destroy if existed
-        this.bgSprite = sprite;
-        this.bgSprite.setDepth(this.depth + 1);
-    }
-    destroy(fromScene) {
-        this.graphics.clear();
-        this.graphics.destroy(true);
-        this.objectSprite?.destroy(true);
-        this.bgSprite?.destroy(true);
-        super.destroy(true);
-    }
-}
-
-var EmptyLevel = {
-    "phaser": {
-        "width": 0,
-        "height": 0,
-        "theme": "default",
-        "layers": {
-            "background": {
-                "spriteSheet": "background",
-                "spriteSheetType": "multi",
-                "objects": [],
-                "depth": 0
-            },
-            "objects": [],
-            "players": {
-                "spriteSheet": "player",
-                "spriteSheetType": "multi",
-                "objects": [],
-                "depth": 2
-            },
-        }
-    },
-    "blockly": {
-        "toolbox": {
-            "kind": "categoryToolbox",
-            "contents": [
-                {
-                    "kind": "category",
-                    "name": "Actions",
-                    "colour": "#745ba5",
-                    "contents": [
-                        {
-                            "type": "movement",
-                            "kind": "block"
-                        },
-                        {
-                            "type": "changeStatus",
-                            "kind": "block"
-                        }
-                    ]
-                },
-                {
-                    "kind": "category",
-                    "name": "Numbers",
-                    "colour": "#0d44ba",
-                    "contents": [
-                        {
-                            "type": "math_number",
-                            "kind": "block"
-                        }
-                    ]
-                },
-                {
-                    "kind": "category",
-                    "name": "Loops",
-                    "colour": "#5ba55b",
-                    "contents": [
-                        {
-                            "type": "for_X_times",
-                            "kind": "block"
-                        }
-                    ]
-                },
-                {
-                    "kind": "category",
-                    "name": "Variables",
-                    "custom": "VARIABLE",
-                    "colour": "#a55b80"
-                }
-            ]
-        },
-        "maxInstances": {
-            "start": 1,
-        },
-        "workspaceBlocks": []
-    }
-};
-
-class EditorBoard {
-    dropZoneTiles = [];
-    scaleFactor;
-    x;
-    y;
-    numRows;
-    numCols;
-    scene;
-    rmColBtn;
-    rmColMinus;
-    addColBtn;
-    addColPlus;
-    rmRowBtn;
-    rmRowMinus;
-    addRowBtn;
-    addRowPlus;
-    blocklyWorkspace;
-    constructor(scene, rows, cols, levelLayers, blocklyLayer) {
-        this.scene = scene;
-        this.numRows = rows;
-        this.numCols = cols;
-        this.blocklyWorkspace = blocklyLayer;
-        this.calculateScale();
-        this.createTiles();
-        if (levelLayers) {
-            const backgroundLayerJson = levelLayers.background;
-            const playersLayerJson = levelLayers.players;
-            const objectLayers = levelLayers.objects;
-            // Background
-            for (let tile of backgroundLayerJson.objects) {
-                if (!this.dropZoneTiles[tile.y])
-                    continue;
-                const dropZoneTile = this.dropZoneTiles[tile.y][tile.x];
-                const sprite = this.scene.add.sprite(dropZoneTile.x, dropZoneTile.y, backgroundLayerJson.spriteSheet, tile.spriteIndex);
-                sprite.setScale(this.scaleFactor);
-                dropZoneTile.setBgSprite(sprite);
-            }
-            // Players
-            for (let tile of playersLayerJson.objects) {
-                const dropZoneTile = this.dropZoneTiles[tile.y][tile.x];
-                const sprite = this.scene.add.sprite(dropZoneTile.x, dropZoneTile.y, playersLayerJson.spriteSheet);
-                sprite.setScale(this.scaleFactor);
-                dropZoneTile.setObjectSprite(sprite);
-            }
-            // Objects
-            for (let layer of objectLayers) {
-                for (let tile of layer.objects) {
-                    const dropZoneTile = this.dropZoneTiles[tile.y][tile.x];
-                    const sprite = this.scene.add.sprite(dropZoneTile.x, dropZoneTile.y, layer.spriteSheet);
-                    sprite.setScale(this.scaleFactor);
-                    dropZoneTile.setObjectSprite(sprite);
-                }
-            }
-        }
-        this.createResizeButtons();
-    }
-    calculateScale() {
-        const layerWidth = this.numCols * config.TILE_SIZE;
-        const layerHeight = this.numRows * config.TILE_SIZE;
-        this.scaleFactor = Math.floor((this.scene.cameras.main.height) / layerHeight / 2);
-        this.x = (this.scene.cameras.main.width - layerWidth * this.scaleFactor) / 2 - layerWidth;
-        this.y = (this.scene.cameras.main.height - layerHeight * this.scaleFactor) / 2;
-    }
-    createTiles() {
-        const scaledTileSize = config.TILE_SIZE * this.scaleFactor;
-        for (let y = 0; y < this.numRows; y++) {
-            this.dropZoneTiles[y] = [];
-            for (let x = 0; x < this.numCols; x++) {
-                const tile = new DropZoneTile(this.scene, this.x + x * scaledTileSize, this.y + y * scaledTileSize, scaledTileSize, scaledTileSize);
-                this.dropZoneTiles[y].push(tile);
-            }
-        }
-    }
-    createResizeButtons() {
-        const tlCoords = this.getTopLeft();
-        // Remove column
-        this.rmColBtn = this.scene.add.sprite(0, 0, "red").setInteractive();
-        this.rmColBtn.on("pointerdown", () => { this.rmColBtn.setTexture("red-pressed"); this.rmColMinus.setTexture("minus-pressed"); });
-        this.rmColBtn.on("pointerup", this.removeCol, this);
-        const rmColContainer = this.scene.add.container(tlCoords.x + 50, tlCoords.y - 50);
-        rmColContainer.add(this.rmColBtn);
-        rmColContainer.add(this.rmColMinus = this.scene.add.sprite(0, 0, "minus"));
-        // Add column
-        this.addColBtn = this.scene.add.sprite(0, 0, "green").setInteractive();
-        this.addColBtn.on("pointerdown", () => { this.addColBtn.setTexture("green-pressed"); this.addColPlus.setTexture("plus-pressed"); });
-        this.addColBtn.on("pointerup", this.addCol, this);
-        const addColContainer = this.scene.add.container(tlCoords.x + 150, tlCoords.y - 50);
-        addColContainer.add(this.addColBtn);
-        addColContainer.add(this.addColPlus = this.scene.add.sprite(0, 0, "plus"));
-        // Remove row
-        this.rmRowBtn = this.scene.add.sprite(0, 0, "red").setInteractive();
-        this.rmRowBtn.on("pointerdown", () => { this.rmRowBtn.setTexture("red-pressed"); this.rmRowMinus.setTexture("minus-pressed"); });
-        this.rmRowBtn.on("pointerup", this.removeRow, this);
-        const rmRowContainer = this.scene.add.container(tlCoords.x - 50, tlCoords.y + 50);
-        rmRowContainer.add(this.rmRowBtn);
-        rmRowContainer.add(this.rmRowMinus = this.scene.add.sprite(0, 0, "minus"));
-        // Add row
-        this.addRowBtn = this.scene.add.sprite(0, 0, "green").setInteractive();
-        this.addRowBtn.on("pointerdown", () => { this.addRowBtn.setTexture("green-pressed"); this.addRowPlus.setTexture("plus-pressed"); });
-        this.addRowBtn.on("pointerup", this.addRow, this);
-        const addRowContainer = this.scene.add.container(tlCoords.x - 50, tlCoords.y + 150);
-        addRowContainer.add(this.addRowBtn);
-        addRowContainer.add(this.addRowPlus = this.scene.add.sprite(0, 0, "plus"));
-    }
-    getTopLeft() {
-        const tileOffset = config.TILE_SIZE / 2 * this.scaleFactor;
-        return new phaserExports.Math.Vector2(this.x - tileOffset, this.y - tileOffset);
-    }
-    getTopRight() {
-        const tl = this.getTopLeft();
-        return new phaserExports.Math.Vector2(tl.x + this.numCols * config.TILE_SIZE * this.scaleFactor, tl.y);
-    }
-    getBottomLeft() {
-        const tl = this.getTopLeft();
-        return new phaserExports.Math.Vector2(tl.x, tl.y + this.numRows * config.TILE_SIZE * this.scaleFactor);
-    }
-    addCol() {
-        this.addColBtn.setTexture("green");
-        this.addColPlus.setTexture("plus");
-        if (this.numCols >= config.EDITOR_MAX_COLS)
-            return;
-        this.numCols++;
-        const tileOffset = config.TILE_SIZE / 2 * this.scaleFactor;
-        const scaledTileSize = config.TILE_SIZE * this.scaleFactor;
-        const topRight = this.getTopRight();
-        for (let i = 0; i < this.numRows; i++) {
-            const tile = new DropZoneTile(this.scene, topRight.x - tileOffset, topRight.y + tileOffset + i * scaledTileSize, scaledTileSize, scaledTileSize);
-            this.dropZoneTiles[i].push(tile);
-        }
-    }
-    removeCol() {
-        this.rmColBtn.setTexture("red");
-        this.rmColMinus.setTexture("minus");
-        if (this.numCols <= config.EDITOR_MIN_COLS)
-            return;
-        this.numCols--;
-        for (let i = 0; i < this.numRows; i++) {
-            this.dropZoneTiles[i].pop()?.destroy();
-        }
-    }
-    addRow() {
-        this.addRowBtn.setTexture("green");
-        this.addRowPlus.setTexture("plus");
-        if (this.numRows >= config.EDITOR_MAX_ROWS)
-            return;
-        this.dropZoneTiles[this.numRows++] = [];
-        const tileOffset = config.TILE_SIZE / 2 * this.scaleFactor;
-        const scaledTileSize = config.TILE_SIZE * this.scaleFactor;
-        const bottomLeft = this.getBottomLeft();
-        for (let i = 0; i < this.numCols; i++) {
-            const tile = new DropZoneTile(this.scene, bottomLeft.x + tileOffset + i * scaledTileSize, bottomLeft.y - tileOffset, scaledTileSize, scaledTileSize);
-            this.dropZoneTiles[this.numRows - 1].push(tile);
-        }
-    }
-    removeRow() {
-        this.rmRowBtn.setTexture("red");
-        this.rmRowMinus.setTexture("minus");
-        if (this.numRows <= config.EDITOR_MIN_ROWS)
-            return;
-        this.numRows--;
-        const tileLayer = this.dropZoneTiles.pop();
-        while (tileLayer.length) {
-            tileLayer.pop()?.destroy();
-        }
-    }
-    toJSON() {
-        let levelJson = JSON.parse(JSON.stringify(EmptyLevel)); // Create a copy
-        levelJson.phaser.height = this.numRows;
-        levelJson.phaser.width = this.numCols;
-        for (let y in this.dropZoneTiles) {
-            const row = this.dropZoneTiles[y];
-            for (let x in row) {
-                const tile = row[x];
-                const bgSprite = tile.getBgSprite();
-                if (bgSprite) {
-                    // Add bg sprite to json
-                    levelJson.phaser.layers.background.objects.push({
-                        "x": parseInt(x),
-                        "y": parseInt(y),
-                        "spriteIndex": bgSprite.frame.name,
-                        "properties": {
-                            "collides": (bgSprite.frame.name == "6" ? false : true)
-                        }
-                    });
-                    const objSprite = tile.getObjectSprite();
-                    if (objSprite) {
-                        if (objSprite.texture.key === "player") {
-                            // Add player
-                            levelJson.phaser.layers.players.objects.push({
-                                "x": parseInt(x),
-                                "y": parseInt(y)
-                            });
-                        }
-                        else {
-                            // Object
-                            let object = {
-                                "x": parseInt(x),
-                                "y": parseInt(y),
-                                "type": objSprite.texture.key,
-                            };
-                            if (objSprite.texture.key === "trap") {
-                                object["properties"] = {
-                                    "enabled": objSprite.frame.name === "0.png" ? false : true
-                                };
-                            }
-                            // Check if spritesheet exists
-                            const dataIndex = levelJson.phaser.layers.objects.findIndex(obj => obj.spriteSheet === objSprite.texture.key);
-                            if (dataIndex !== -1) {
-                                // Already registerd, add object
-                                levelJson.phaser.layers.objects[dataIndex].objects.push(object);
-                            }
-                            else {
-                                // Not registered, create and add
-                                const spriteSheetType = (objSprite.texture.getFrameNames().length > 1 ? "multi" : "img");
-                                levelJson.phaser.layers.objects.push({
-                                    "spriteSheet": objSprite.texture.key,
-                                    "spriteSheetType": spriteSheetType,
-                                    "objects": [object],
-                                    "depth": 1
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if (this.blocklyWorkspace) {
-            levelJson.blockly = this.blocklyWorkspace;
-        }
-        return levelJson;
-    }
-}
-
 var top = 'top';
 var bottom = 'bottom';
 var right = 'right';
@@ -251905,6 +251389,522 @@ enableDismissTrigger(Toast);
 
 defineJQueryPlugin(Toast);
 
+var MovementOrientation;
+(function (MovementOrientation) {
+    MovementOrientation["Horizontal"] = "horizontal";
+    MovementOrientation["Vertical"] = "vertical";
+})(MovementOrientation || (MovementOrientation = {}));
+class EnemyObject extends ArticodingSprite {
+    isAlive = true;
+    currentDirection;
+    movementOrientation;
+    gridPhysics;
+    constructor(scene, tileX, tileY, texture, movementOrientation) {
+        super(scene, tileX, tileY, texture);
+        this.scene = scene;
+        this.scene.add.existing(this);
+        this.gridPhysics = this.scene.getGridPhysics();
+        this.movementOrientation = MovementOrientation[movementOrientation];
+        if (!this.movementOrientation)
+            this.movementOrientation = MovementOrientation.Vertical;
+        if (this.movementOrientation == MovementOrientation.Vertical)
+            this.currentDirection = Direction.DOWN;
+        else
+            this.currentDirection = Direction.RIGHT;
+        document.addEventListener("move", this.move);
+    }
+    collide(player) {
+    }
+    move = () => {
+        if (!this.isAlive)
+            return;
+        // TODO: play anims
+        if (this.gridPhysics.isBlockingDirection(this.getTilePos(), this.currentDirection)) {
+            // Running anim
+            // this.anims.play(`enemy_${this.currentDirection}`);
+            this.bounceTween(this.currentDirection);
+            this.changeDirection();
+        }
+        else {
+            // this.anims.play(`enemy_${this.currentDirection}`);
+            this.moveTween();
+        }
+    };
+    changeDirection() {
+        if (this.currentDirection === Direction.DOWN || this.currentDirection === Direction.UP)
+            this.currentDirection = (this.currentDirection === Direction.DOWN ? Direction.UP : Direction.DOWN);
+        else
+            this.currentDirection = (this.currentDirection === Direction.LEFT ? Direction.RIGHT : Direction.LEFT);
+    }
+    bounceTween(direction) {
+        const pixelsToMove = config.TILE_SIZE / 2 * this.scene.getScaleFactor();
+        const movementDistance = this.gridPhysics.getMovementDistance(direction, pixelsToMove);
+        const newPlayerPos = this.getBottomCenter().add(movementDistance);
+        const speedModifier = parseInt(document.getElementById("speedModifierBtn").value);
+        this.scene.tweens.add({
+            targets: this,
+            x: newPlayerPos.x,
+            y: newPlayerPos.y,
+            duration: config.MOVEMENT_ANIMDURATION / 2 / speedModifier,
+            ease: "Sine.inOut",
+            yoyo: true,
+            onComplete: this.stopMoving.bind(this)
+        });
+    }
+    // TODO: Stop anims
+    stopMoving() {
+        // this.anims.stop();
+        // Set new idle frame
+        // this.setFrame(0);
+        this.gridPhysics.collide(this);
+    }
+    moveTween() {
+        const pixelsToMove = config.TILE_SIZE * this.scene.getScaleFactor();
+        const movementDistance = this.gridPhysics.getMovementDistance(this.currentDirection, pixelsToMove);
+        const newPosition = this.getBottomCenter().add(movementDistance);
+        this.updateTilePos();
+        const speedModifier = parseInt(document.getElementById("speedModifierBtn").value);
+        this.scene.tweens.add({
+            targets: this,
+            x: newPosition.x,
+            y: newPosition.y,
+            duration: config.MOVEMENT_ANIMDURATION / speedModifier,
+            ease: "Sine.inOut",
+            onComplete: this.stopMoving.bind(this)
+        });
+    }
+    updateTilePos() {
+        const movementVector = this.gridPhysics.getMovementVector(this.currentDirection);
+        this.setTilePos(this.getTilePos().add(movementVector));
+    }
+    setTilePos(tilePosition) {
+        this.tileX = tilePosition.x;
+        this.tileY = tilePosition.y;
+    }
+    getTilePos() {
+        return new phaserExports.Math.Vector2(this.tileX, this.tileY);
+    }
+    kill() {
+        this.isAlive = false;
+        this.destroy();
+    }
+    destroy(fromScene) {
+        document.removeEventListener("move", this.move);
+        super.destroy(fromScene);
+    }
+}
+
+class DropZoneTile extends phaserExports.GameObjects.Zone {
+    //owned sprite:
+    bgSprite;
+    //owned object:
+    objectSprite;
+    // graphics:
+    graphics;
+    constructor(scene, x, y, width, height) {
+        super(scene, x, y, width, height);
+        this.setRectangleDropZone(width, height);
+        this.graphics = this.scene.add.graphics();
+        this.graphics.lineStyle(2, 0xffff00);
+        this.graphics.strokeRect(this.x - this.input.hitArea.width / 2, this.y - this.input.hitArea.height / 2, this.input.hitArea.width, this.input.hitArea.height);
+        this.scene.add.existing(this);
+        this.on("pointerdown", this.clickEvent);
+        this.on('pointerover', this.pointerOverEvent);
+    }
+    pointerOverEvent(pointer) {
+        if (pointer.leftButtonDown())
+            this.clickEvent();
+    }
+    clickEvent() {
+        const selectedTool = (document.querySelector('input[name="editor-tool"]:checked'))?.id;
+        if (selectedTool === "paintbrush") {
+            this.paintIcon();
+        }
+        else if (selectedTool === "eraser") {
+            this.deleteIcon();
+        }
+    }
+    paintIcon() {
+        const icon = (this.scene).getSelectedIcon();
+        if (icon.texture === undefined)
+            return;
+        const scaleFactor = this.width / config.TILE_SIZE;
+        const sprite = this.scene.add.sprite(this.x, this.y, icon.texture, icon.frame);
+        sprite.setScale(scaleFactor);
+        if (icon.texture === "background") {
+            this.setBgSprite(sprite);
+        }
+        else {
+            this.setObjectSprite(sprite);
+        }
+    }
+    deleteIcon() {
+        if (this.objectSprite) {
+            this.objectSprite.destroy(true);
+            this.objectSprite = undefined;
+        }
+        else {
+            this.bgSprite?.destroy(true);
+            this.bgSprite = undefined;
+        }
+    }
+    resize(x, y, width, height) {
+        this.setPosition(x, y);
+        this.setSize(width, height);
+        //setRectangleDropZone tal vez de error
+        this.setRectangleDropZone(width, height);
+    }
+    getBgSprite() {
+        return this.bgSprite;
+    }
+    contains(x, y) {
+        const left = this.x;
+        const right = this.x + this.width;
+        const top = this.y;
+        const bottom = this.y + this.height;
+        return x >= left && x <= right && y >= top && y <= bottom;
+    }
+    getObjectSprite() {
+        return this.objectSprite;
+    }
+    setObjectSprite(sprite) {
+        this.objectSprite?.destroy(true);
+        if (this.bgSprite !== undefined) {
+            // Create duplicate sprite only if has background
+            this.objectSprite = sprite;
+            this.objectSprite.setDepth(this.depth + 2);
+        }
+        else {
+            // Destroy sprite
+            sprite.destroy(true);
+        }
+    }
+    setBgSprite(sprite) {
+        this.objectSprite?.destroy(true); // destroy if existed
+        this.objectSprite = undefined;
+        this.bgSprite?.destroy(true); // destroy if existed
+        this.bgSprite = sprite;
+        this.bgSprite.setDepth(this.depth + 1);
+    }
+    destroy(fromScene) {
+        this.graphics.clear();
+        this.graphics.destroy(true);
+        this.objectSprite?.destroy(true);
+        this.bgSprite?.destroy(true);
+        super.destroy(true);
+    }
+}
+
+var EmptyLevel = {
+    "phaser": {
+        "width": 0,
+        "height": 0,
+        "theme": "default",
+        "layers": {
+            "background": {
+                "spriteSheet": "background",
+                "spriteSheetType": "multi",
+                "objects": [],
+                "depth": 0
+            },
+            "objects": [],
+            "players": {
+                "spriteSheet": "player",
+                "spriteSheetType": "multi",
+                "objects": [],
+                "depth": 2
+            },
+        }
+    },
+    "blockly": {
+        "toolbox": {
+            "kind": "categoryToolbox",
+            "contents": [
+                {
+                    "kind": "category",
+                    "name": "Actions",
+                    "colour": "#745ba5",
+                    "contents": [
+                        {
+                            "type": "movement",
+                            "kind": "block"
+                        },
+                        {
+                            "type": "changeStatus",
+                            "kind": "block"
+                        }
+                    ]
+                },
+                {
+                    "kind": "category",
+                    "name": "Numbers",
+                    "colour": "#0d44ba",
+                    "contents": [
+                        {
+                            "type": "math_number",
+                            "kind": "block"
+                        }
+                    ]
+                },
+                {
+                    "kind": "category",
+                    "name": "Loops",
+                    "colour": "#5ba55b",
+                    "contents": [
+                        {
+                            "type": "for_X_times",
+                            "kind": "block"
+                        }
+                    ]
+                },
+                {
+                    "kind": "category",
+                    "name": "Variables",
+                    "custom": "VARIABLE",
+                    "colour": "#a55b80"
+                }
+            ]
+        },
+        "maxInstances": {
+            "start": 1,
+        },
+        "workspaceBlocks": []
+    }
+};
+
+class EditorBoard {
+    dropZoneTiles = [];
+    scaleFactor;
+    x;
+    y;
+    numRows;
+    numCols;
+    scene;
+    rmColBtn;
+    rmColMinus;
+    addColBtn;
+    addColPlus;
+    rmRowBtn;
+    rmRowMinus;
+    addRowBtn;
+    addRowPlus;
+    blocklyWorkspace;
+    constructor(scene, rows, cols, levelLayers, blocklyLayer) {
+        this.scene = scene;
+        this.numRows = rows;
+        this.numCols = cols;
+        this.blocklyWorkspace = blocklyLayer;
+        this.calculateScale();
+        this.createTiles();
+        if (levelLayers) {
+            const backgroundLayerJson = levelLayers.background;
+            const playersLayerJson = levelLayers.players;
+            const objectLayers = levelLayers.objects;
+            // Background
+            for (let tile of backgroundLayerJson.objects) {
+                if (!this.dropZoneTiles[tile.y])
+                    continue;
+                const dropZoneTile = this.dropZoneTiles[tile.y][tile.x];
+                const sprite = this.scene.add.sprite(dropZoneTile.x, dropZoneTile.y, backgroundLayerJson.spriteSheet, tile.spriteIndex);
+                sprite.setScale(this.scaleFactor);
+                dropZoneTile.setBgSprite(sprite);
+            }
+            // Players
+            for (let tile of playersLayerJson.objects) {
+                const dropZoneTile = this.dropZoneTiles[tile.y][tile.x];
+                const sprite = this.scene.add.sprite(dropZoneTile.x, dropZoneTile.y, playersLayerJson.spriteSheet);
+                sprite.setScale(this.scaleFactor);
+                dropZoneTile.setObjectSprite(sprite);
+            }
+            // Objects
+            for (let layer of objectLayers) {
+                for (let tile of layer.objects) {
+                    const dropZoneTile = this.dropZoneTiles[tile.y][tile.x];
+                    const sprite = this.scene.add.sprite(dropZoneTile.x, dropZoneTile.y, layer.spriteSheet);
+                    sprite.setScale(this.scaleFactor);
+                    dropZoneTile.setObjectSprite(sprite);
+                }
+            }
+        }
+        this.createResizeButtons();
+    }
+    calculateScale() {
+        const layerWidth = this.numCols * config.TILE_SIZE;
+        const layerHeight = this.numRows * config.TILE_SIZE;
+        this.scaleFactor = Math.floor((this.scene.cameras.main.height) / layerHeight / 2);
+        this.x = (this.scene.cameras.main.width - layerWidth * this.scaleFactor) / 2 - layerWidth;
+        this.y = (this.scene.cameras.main.height - layerHeight * this.scaleFactor) / 2;
+    }
+    createTiles() {
+        const scaledTileSize = config.TILE_SIZE * this.scaleFactor;
+        for (let y = 0; y < this.numRows; y++) {
+            this.dropZoneTiles[y] = [];
+            for (let x = 0; x < this.numCols; x++) {
+                const tile = new DropZoneTile(this.scene, this.x + x * scaledTileSize, this.y + y * scaledTileSize, scaledTileSize, scaledTileSize);
+                this.dropZoneTiles[y].push(tile);
+            }
+        }
+    }
+    createResizeButtons() {
+        const tlCoords = this.getTopLeft();
+        // Remove column
+        this.rmColBtn = this.scene.add.sprite(0, 0, "red").setInteractive();
+        this.rmColBtn.on("pointerdown", () => { this.rmColBtn.setTexture("red-pressed"); this.rmColMinus.setTexture("minus-pressed"); });
+        this.rmColBtn.on("pointerup", this.removeCol, this);
+        const rmColContainer = this.scene.add.container(tlCoords.x + 50, tlCoords.y - 50);
+        rmColContainer.add(this.rmColBtn);
+        rmColContainer.add(this.rmColMinus = this.scene.add.sprite(0, 0, "minus"));
+        // Add column
+        this.addColBtn = this.scene.add.sprite(0, 0, "green").setInteractive();
+        this.addColBtn.on("pointerdown", () => { this.addColBtn.setTexture("green-pressed"); this.addColPlus.setTexture("plus-pressed"); });
+        this.addColBtn.on("pointerup", this.addCol, this);
+        const addColContainer = this.scene.add.container(tlCoords.x + 150, tlCoords.y - 50);
+        addColContainer.add(this.addColBtn);
+        addColContainer.add(this.addColPlus = this.scene.add.sprite(0, 0, "plus"));
+        // Remove row
+        this.rmRowBtn = this.scene.add.sprite(0, 0, "red").setInteractive();
+        this.rmRowBtn.on("pointerdown", () => { this.rmRowBtn.setTexture("red-pressed"); this.rmRowMinus.setTexture("minus-pressed"); });
+        this.rmRowBtn.on("pointerup", this.removeRow, this);
+        const rmRowContainer = this.scene.add.container(tlCoords.x - 50, tlCoords.y + 50);
+        rmRowContainer.add(this.rmRowBtn);
+        rmRowContainer.add(this.rmRowMinus = this.scene.add.sprite(0, 0, "minus"));
+        // Add row
+        this.addRowBtn = this.scene.add.sprite(0, 0, "green").setInteractive();
+        this.addRowBtn.on("pointerdown", () => { this.addRowBtn.setTexture("green-pressed"); this.addRowPlus.setTexture("plus-pressed"); });
+        this.addRowBtn.on("pointerup", this.addRow, this);
+        const addRowContainer = this.scene.add.container(tlCoords.x - 50, tlCoords.y + 150);
+        addRowContainer.add(this.addRowBtn);
+        addRowContainer.add(this.addRowPlus = this.scene.add.sprite(0, 0, "plus"));
+    }
+    getTopLeft() {
+        const tileOffset = config.TILE_SIZE / 2 * this.scaleFactor;
+        return new phaserExports.Math.Vector2(this.x - tileOffset, this.y - tileOffset);
+    }
+    getTopRight() {
+        const tl = this.getTopLeft();
+        return new phaserExports.Math.Vector2(tl.x + this.numCols * config.TILE_SIZE * this.scaleFactor, tl.y);
+    }
+    getBottomLeft() {
+        const tl = this.getTopLeft();
+        return new phaserExports.Math.Vector2(tl.x, tl.y + this.numRows * config.TILE_SIZE * this.scaleFactor);
+    }
+    addCol() {
+        this.addColBtn.setTexture("green");
+        this.addColPlus.setTexture("plus");
+        if (this.numCols >= config.EDITOR_MAX_COLS)
+            return;
+        this.numCols++;
+        const tileOffset = config.TILE_SIZE / 2 * this.scaleFactor;
+        const scaledTileSize = config.TILE_SIZE * this.scaleFactor;
+        const topRight = this.getTopRight();
+        for (let i = 0; i < this.numRows; i++) {
+            const tile = new DropZoneTile(this.scene, topRight.x - tileOffset, topRight.y + tileOffset + i * scaledTileSize, scaledTileSize, scaledTileSize);
+            this.dropZoneTiles[i].push(tile);
+        }
+    }
+    removeCol() {
+        this.rmColBtn.setTexture("red");
+        this.rmColMinus.setTexture("minus");
+        if (this.numCols <= config.EDITOR_MIN_COLS)
+            return;
+        this.numCols--;
+        for (let i = 0; i < this.numRows; i++) {
+            this.dropZoneTiles[i].pop()?.destroy();
+        }
+    }
+    addRow() {
+        this.addRowBtn.setTexture("green");
+        this.addRowPlus.setTexture("plus");
+        if (this.numRows >= config.EDITOR_MAX_ROWS)
+            return;
+        this.dropZoneTiles[this.numRows++] = [];
+        const tileOffset = config.TILE_SIZE / 2 * this.scaleFactor;
+        const scaledTileSize = config.TILE_SIZE * this.scaleFactor;
+        const bottomLeft = this.getBottomLeft();
+        for (let i = 0; i < this.numCols; i++) {
+            const tile = new DropZoneTile(this.scene, bottomLeft.x + tileOffset + i * scaledTileSize, bottomLeft.y - tileOffset, scaledTileSize, scaledTileSize);
+            this.dropZoneTiles[this.numRows - 1].push(tile);
+        }
+    }
+    removeRow() {
+        this.rmRowBtn.setTexture("red");
+        this.rmRowMinus.setTexture("minus");
+        if (this.numRows <= config.EDITOR_MIN_ROWS)
+            return;
+        this.numRows--;
+        const tileLayer = this.dropZoneTiles.pop();
+        while (tileLayer.length) {
+            tileLayer.pop()?.destroy();
+        }
+    }
+    toJSON() {
+        let levelJson = JSON.parse(JSON.stringify(EmptyLevel)); // Create a copy
+        levelJson.phaser.height = this.numRows;
+        levelJson.phaser.width = this.numCols;
+        for (let y in this.dropZoneTiles) {
+            const row = this.dropZoneTiles[y];
+            for (let x in row) {
+                const tile = row[x];
+                const bgSprite = tile.getBgSprite();
+                if (bgSprite) {
+                    // Add bg sprite to json
+                    levelJson.phaser.layers.background.objects.push({
+                        "x": parseInt(x),
+                        "y": parseInt(y),
+                        "spriteIndex": bgSprite.frame.name,
+                        "properties": {
+                            "collides": (bgSprite.frame.name == "6" ? false : true)
+                        }
+                    });
+                    const objSprite = tile.getObjectSprite();
+                    if (objSprite) {
+                        if (objSprite.texture.key === "player") {
+                            // Add player
+                            levelJson.phaser.layers.players.objects.push({
+                                "x": parseInt(x),
+                                "y": parseInt(y)
+                            });
+                        }
+                        else {
+                            // Object
+                            let object = {
+                                "x": parseInt(x),
+                                "y": parseInt(y),
+                                "type": objSprite.texture.key,
+                            };
+                            if (objSprite.texture.key === "trap") {
+                                object["properties"] = {
+                                    "enabled": objSprite.frame.name === "0.png" ? false : true
+                                };
+                            }
+                            // Check if spritesheet exists
+                            const dataIndex = levelJson.phaser.layers.objects.findIndex(obj => obj.spriteSheet === objSprite.texture.key);
+                            if (dataIndex !== -1) {
+                                // Already registerd, add object
+                                levelJson.phaser.layers.objects[dataIndex].objects.push(object);
+                            }
+                            else {
+                                // Not registered, create and add
+                                const spriteSheetType = (objSprite.texture.getFrameNames().length > 1 ? "multi" : "img");
+                                levelJson.phaser.layers.objects.push({
+                                    "spriteSheet": objSprite.texture.key,
+                                    "spriteSheetType": spriteSheetType,
+                                    "objects": [object],
+                                    "depth": 1
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (this.blocklyWorkspace) {
+            levelJson.blockly = this.blocklyWorkspace;
+        }
+        return levelJson;
+    }
+}
+
 function createPhaserConfig() {
     return {
         type: phaserExports.CANVAS,
@@ -253215,7 +253215,7 @@ async function playLevel$3(event) {
     event.preventDefault();
     const anchorTag = event.target.closest("a.getLevel");
     const id = anchorTag.href.split("level/")[1];
-    history.pushState({ id }, "", `level?id=${id}`);
+    history.pushState({ id }, "", `classLevel?id=${id}`);
     route();
 }
 async function loadCommunity(page = '1') {
@@ -253852,7 +253852,7 @@ function StudentsMenu(students) {
         dropdown.remove();
     });
 }
-function AddSetsMenu(sets, classSets, groupId) {
+function AddSetsMenu(sets, classSets, groupId, userLevels, user) {
     let existingDropdown = document.getElementById("dropdownMenu");
     if (existingDropdown) {
         existingDropdown.remove();
@@ -253929,7 +253929,10 @@ function AddSetsMenu(sets, classSets, groupId) {
   </div>
   <div style="display: flex; justify-content: center; margin-top: 15px;">
     <button id="saveChangesButton" style="padding: 10px 20px; background-color: green; color: white; border: none; border-radius: 5px; cursor: pointer;">
-      Guardar Cambios
+      Save changes
+    </button>
+    <button id="createSetButton" style="padding: 10px 20px; background-color: green; color: white; border: none; border-radius: 5px; cursor: pointer;">
+      Create Set
     </button>
   </div>
 `;
@@ -253947,6 +253950,106 @@ function AddSetsMenu(sets, classSets, groupId) {
     document.getElementById("saveChangesButton")?.addEventListener("click", function () {
         handleSaveSetsChanges(sets, setLevelTitles, groupId);
         dropdown.remove();
+    });
+    document.getElementById("createSetButton")?.addEventListener("click", function () {
+        createSet(userLevels, user);
+        dropdown.remove();
+    });
+}
+function createSet(userLevels, user) {
+    let createSetModalHtml = `
+  <div id="createSetModal" class="modal fade" tabindex="-1" aria-labelledby="createSetModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+          <div class="modal-content">
+              <div class="modal-header bg-primary text-white">
+                  <h5 class="modal-title" id="createSetModalLabel">Crear Set de Niveles</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <form id="createSetForm">
+                      <div class="mb-3">
+                          <label for="setName" class="form-label">Nombre del Set</label>
+                          <input type="text" class="form-control" id="setName" required>
+                      </div>
+                     <div>
+                          <label for="setDescription" class="form-label">Descripción</label>
+                          <textarea class="form-control" id="setDescription" rows="3" required></textarea>
+                      </div>
+                      <div class="mb-3">
+                          <label for="setLevels" class="form-label">Añadir Niveles</label>
+                          <div id="setLevels" class="form-check">
+                              <!-- Los niveles se llenarán dinámicamente con checkboxes -->
+                              ${userLevels.map(level => `
+                                <div class="form-check">
+                                  <input class="form-check-input" type="checkbox" value="${level.id}" id="level-${level.id}">
+                                  <label class="form-check-label" for="level-${level.id}">
+                                    ${level.title}
+                                  </label>
+                                </div>
+                              `).join('')}
+                          </div>
+                      </div>
+                  </form>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="submit" class="btn btn-primary" id="saveSetBtn">Guardar Set</button>
+              </div>
+          </div>
+      </div>
+  </div>`;
+    let createSetModal = document.createElement("div");
+    createSetModal.innerHTML = createSetModalHtml;
+    document.body.appendChild(createSetModal);
+    let createSetModalElement = document.querySelector("#createSetModal");
+    let createSetModalInstance = new Modal(createSetModalElement);
+    createSetModalElement.addEventListener("hidden.bs.modal", function () {
+        createSetModalElement.remove();
+    });
+    createSetModalInstance.show();
+    document.getElementById("saveSetBtn")?.addEventListener("click", async function (event) {
+        event.preventDefault();
+        let setName = document.getElementById("setName").value.trim();
+        let setDescription = document.getElementById("setDescription").value.trim();
+        // Obtener los niveles seleccionados (IDs de los checkboxes marcados)
+        const selectedLevels = Array.from(document.getElementById("setLevels").querySelectorAll('input[type="checkbox"]:checked'))
+            .map((checkbox) => checkbox.value);
+        if (setName === "" || setDescription === "") {
+            alert("Por favor, completa todos los campos.");
+            return;
+        }
+        let postData = {
+            name: setName,
+            description: setDescription,
+            levels: selectedLevels,
+            user: user
+        };
+        try {
+            await fetchRequest(`${API_ENDPOINT$4}/set/create/`, "POST", JSON.stringify(postData));
+            createSetModalInstance.hide();
+            // Crear un mensaje de "Cambios Guardados"
+            const successMessage = document.createElement("div");
+            successMessage.textContent = "Cambios guardados correctamente!";
+            successMessage.style.position = "fixed";
+            successMessage.style.top = "20px";
+            successMessage.style.left = "50%";
+            successMessage.style.transform = "translateX(-50%)";
+            successMessage.style.padding = "10px 20px";
+            successMessage.style.backgroundColor = "green";
+            successMessage.style.color = "white";
+            successMessage.style.borderRadius = "5px";
+            successMessage.style.fontSize = "16px";
+            successMessage.style.zIndex = "1000";
+            // Insertar el mensaje en el body
+            document.body.appendChild(successMessage);
+            setTimeout(() => {
+                successMessage.remove();
+            }, 3000);
+        }
+        catch (error) {
+            console.error('Error al crear el set de niveles:', error);
+            alert("Hubo un error al crear el set de niveles.");
+        }
     });
 }
 async function handleSaveSetsChanges(sets, setLevelTitles, groupId) {
@@ -254340,7 +254443,7 @@ async function loadClassProfesor(id, page = '1') {
                         });
                     }
                     document.getElementById("addSets").addEventListener("click", (e) => {
-                        AddSetsMenu(userSets, sets, classId);
+                        AddSetsMenu(userSets, sets, classId, userLevels, cookie.id);
                     });
                     document.getElementById("addLevels").addEventListener("click", (e) => {
                         AddLevelsMenu(userLevels, levels, classId);
@@ -255250,6 +255353,9 @@ class LevelPlayer extends phaserExports.Scene {
         this.events.on('destroy', this.shutdown, this);
         document.getElementById("speedModifierBtn").addEventListener("click", this.changeAnimSpeed);
         document.getElementById("editButton").addEventListener("click", this.loadLevelEditor);
+        if (document.getElementById("saveButton")) {
+            document.getElementById("saveButton").addEventListener("click", this.saveLevel);
+        }
         //Block limits checks
         for (var block in this.blockMap) {
             this.setLimitMenuEventListener(block);
@@ -255552,7 +255658,8 @@ class LevelPlayer extends phaserExports.Scene {
         else {
             if (hasLost) {
                 const event = new CustomEvent("lose");
-                document.dispatchEvent(event);            }
+                document.dispatchEvent(event);
+            }
             else {
                 //save level if its in the editor
                 // From Level Editor
@@ -255627,6 +255734,7 @@ class LevelPlayer extends phaserExports.Scene {
                 }
                 if (object !== null) {
                     console.log(JSON.stringify(this.levelJSON));
+                    this.getAppendCreateLevelModal(object.id, true);
                     if (window.confirm("Save Level?")) {
                         // Preguntar al usuario el nombre del nivel
                         const levelName = window.prompt("Ingrese un nombre para el nivel:", "Nombre");
@@ -255675,6 +255783,10 @@ class LevelPlayer extends phaserExports.Scene {
         e.currentTarget.innerHTML = `${newVal}x`;
         e.currentTarget.value = `${newVal}`;
     };
+    getLevelId() {
+        let params = new URLSearchParams(window.location.search);
+        return params.get("id");
+    }
     loadLevelEditor = async () => {
         await PhaserController.destroyGame();
         loadLevelEditor(this.levelJSON);
@@ -255791,6 +255903,94 @@ class LevelPlayer extends phaserExports.Scene {
         else
             check.checked = true;
         console.log(JSON.stringify(toolboxContent));
+    };
+    getAppendCreateLevelModal(userId, publish) {
+        let createModal = `
+        <div id="levelCreateModal" class="modal fade" tabindex="-1" aria-labelledby="createLevelLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="createLevelLabel">Enter your level data</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="mb-3">
+                                <label for="level_name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="level_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="level_desc" class="form-label" >Description</label>
+                                <textarea class="form-control" size="150" id="level_desc"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tagSelect" class="form-label" >Tags</label>
+                                <select id="tagSelect" name="tags[]" multiple="multiple" style="width: 100%">
+                                  <option value="LP">Loops</option>
+                                  <option value="VR">Variable</option>
+                                  <option value="BS">Basic</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Sumbit" id="level_sumbit">SUMBIT</button>
+                        <span id="text-error-createLevel"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+        let createLevel = document.createElement("div");
+        createLevel.innerHTML = createModal;
+        document.body.appendChild(createLevel);
+        let createLevelModalElement = document.querySelector("#levelCreateModal");
+        let createLevelModalInstance = new Modal(createLevelModalElement);
+        createLevelModalElement.addEventListener("hidden.bs.modal", function () {
+            createLevelModalElement.remove();
+        });
+        let sumbitBtn = document.getElementById("level_sumbit");
+        if (sumbitBtn) {
+            sumbitBtn.addEventListener("click", async () => {
+                // Preguntar al usuario el nombre del nivel
+                const levelName = document.getElementById("level_name").value;
+                const levelDescription = document.getElementById("level_desc").value;
+                const selectData = $('#tagSelect').select2('data');
+                const tags = selectData.map(i => i.text);
+                const levelData = {
+                    level_id: this.getLevelId(),
+                    user: userId,
+                    category: null,
+                    self: null,
+                    title: levelName,
+                    data: JSON.stringify(this.levelJSON),
+                    minBlocks: this.levelJSON.MinBlocksUsed,
+                    description: levelDescription,
+                    publish: publish,
+                    tags: tags
+                };
+                try {
+                    if (levelData.level_id) {
+                        await fetchRequest(`${API_ENDPOINT$2}/level/update`, "POST", JSON.stringify(levelData));
+                        alert(`Nivel ${levelName} modificado exitosamente.`);
+                    }
+                    else {
+                        await fetchRequest(`${API_ENDPOINT$2}/level/create`, "POST", JSON.stringify(levelData));
+                        alert(`Nivel ${levelName} creado exitosamente.`);
+                    }
+                }
+                catch (error) {
+                    alert("Connection to server failed");
+                }
+            });
+        }
+        $('#tagSelect').select2({ placeholder: "Filter by tags", allowClear: true, dropdownParent: $('#levelCreateModal')
+        });
+        createLevelModalInstance.show();
+    }
+    saveLevel = async () => {
+        let cookie = sessionCookieValue();
+        this.getAppendCreateLevelModal(cookie.id, false);
     };
     rotate(direction) {
         this.events.emit("rotateOrder", Direction[direction]);
@@ -258588,7 +258788,7 @@ let currentFromLevelEditor = false;
  *
  * @returns String of HTMLElement for LevelPlayer
  */
-function getLevelPlayerHTML(fromLevelEditor) {
+function getLevelPlayerHTML(levelJSON, fromLevelEditor) {
     return `<div class="row row-cols-1 row-cols-lg-2 h-100 gx-1">
               <div id="blocklyArea" class="col col-lg-4 h-100 position-relative collapse collapse-horizontal show">
                   <div id="blocklyDiv" class="position-absolute"></div>
@@ -258604,54 +258804,49 @@ function getLevelPlayerHTML(fromLevelEditor) {
               <div id="phaserDiv" class="col col-lg-8 mh-100 p-0 position-relative">
                   <canvas id="phaserCanvas"></canvas>
                   <div class="position-absolute top-0 end-0 mt-2 me-2">
+                        ${getSaveButton(fromLevelEditor)}
                         ${getEditButton(fromLevelEditor)}
                         ${getBlockLimitButton(fromLevelEditor)}
+                        ${getStarsInfo(levelJSON, fromLevelEditor)}
                         <button class="btn btn-warning" id="speedModifierBtn" value="1">
                             1x
                         </button>
                         <button class="btn btn-light" id="levelPlayerTourBtn">
                             <i class="bi bi-question"></i>
                         </button>
-                  </div>
-                  <div style="position: absolute; top: 3%; right: 5%; margin-top: 60px; margin-right: 0px; background: #833c51; color: white; border: 2px solid #ffc107; border-radius: 10px; width: 150px; padding: 10px; font-size: 14px;">
-					<h2 style="background: #ffc107; color: black; font-size: 12px; text-align: center; padding: 5px; margin: -10px -10px 10px -10px; border-top-left-radius: 8px; border-top-right-radius: 8px;">
-                    COLLECT ALL STARS:</h2>
-					<ul>
-                        ${currentLevelJSON.firstStar ? `<li><i class="bi bi-star-fill"></i>${currentLevelJSON.firstStar}</li>` : ""}
-
-					</ul>
-				</div>
               </div>
             </div>
             ${getBlockLimitMenu(fromLevelEditor)}`;
 }
-// function getStarsList(loopUsed: boolean, variableUsed: boolean, minBlocksUsed: number) {
-//     const starsList = [null, null, null];
-//     let loop : boolean = true;
-//     let variable : boolean = true;
-//     let minBlocks : number;
-//     let chest : number ;
-//     for( var i in starsList) {
-//         if(loopUsed && loop) {
-//             starsList[i] = "Use a loop to get a star";
-//             loop = false;
-//         }
-//         else if(variableUsed && variable) {
-//             starsList[i] = "Use a variable to get a star";
-//             variable = false;
-//         }
-//         else if(this.levelJSON.phaser.layers.objects ==="chest") {
-//             starsList[i] = "collect chests to get more stars";
-//             if(this.levelJSON.phaser.layers.objects >1){0}
-//         }
-//         else if(minBlocksUsed > 0) {
-//         }
-//     }
-// }
+function getStarsInfo(levelJSON, fromLevelEditor) {
+    if (fromLevelEditor) {
+        return ''; // No mostrar nada si estamos en el editor
+    }
+    currentLevelJSON = levelJSON;
+    if (currentLevelJSON.firstStar === undefined && currentLevelJSON.secondStar === undefined && currentLevelJSON.thirdStar === undefined) {
+        return ''; // No hacer nada si no existen
+    }
+    return `<div style="position: absolute; top: 3%; right: 5%; margin-top: 60px; margin-right: 0px; background: #833c51; color: white; border: 2px solid #ffc107; border-radius: 10px; width: 150px; padding: 10px; font-size: 14px;">
+                    <h2 style="background: #ffc107; color: black; font-size: 12px; text-align: center; padding: 5px; margin: -10px -10px 10px -10px; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                    COLLECT ALL STARS:</h2>
+                    <ul>
+                        ${currentLevelJSON.firstStar ? `<li><i class="bi bi-star-fill"></i>${currentLevelJSON.firstStar}</li>` : ""}
+                        ${currentLevelJSON.secondStar ? `<li><i class="bi bi-star-fill"></i>${levelJSON.secondStar}</li>` : ""}
+                        ${currentLevelJSON.thirdStar ? `<li><i class="bi bi-star-fill"></i>${levelJSON.thirdStar}</li>` : ""}
+                    </ul>
+                </div>`;
+}
 function getEditButton(fromLevelEditor) {
     return `<button class="btn btn-primary" id="editButton">
                 <i class="bi ${fromLevelEditor ? "bi-pencil-square" : "bi-copy"}"></i>
             </button>`;
+}
+function getSaveButton(fromLevelEditor) {
+    return fromLevelEditor ?
+        `<button class="btn btn-primary" id="saveButton">
+            <i class="bi bi-archive"></i>
+        </button>`
+        : "";
 }
 function getBlockLimitButton(fromLevelEditor) {
     return fromLevelEditor ? `<button class="btn btn-primary" id="blockLimitButton" data-bs-toggle="offcanvas" 
@@ -258776,7 +258971,7 @@ async function loadLevel(levelJSON, fromLevelEditor, category) {
     if (category) {
         document.getElementById("content").setAttribute("categoryIndex", category);
     }
-    document.getElementById("content").innerHTML = getLevelPlayerHTML(fromLevelEditor);
+    document.getElementById("content").innerHTML = getLevelPlayerHTML(levelJSON, fromLevelEditor);
     currentLevelJSON = levelJSON;
     fromLevelEditor === undefined ? fromLevelEditor = false : currentFromLevelEditor = fromLevelEditor;
     const toolbox = levelJSON.blockly.toolbox;
@@ -258784,6 +258979,7 @@ async function loadLevel(levelJSON, fromLevelEditor, category) {
     const workspaceBlocks = currentLevelJSON.blockly.workspaceBlocks;
     PhaserController.init("LevelPlayer", LevelPlayer, { levelJSON, fromLevelEditor });
     BlocklyController.init(BLOCKLY_DIV_ID, toolbox, maxInstances, workspaceBlocks);
+    //document.getElementById("phaserDiv").innerHTML += starsInfoHTML;
 }
 function restartCurrentLevel() {
     PhaserController.init("LevelPlayer", LevelPlayer, { levelJSON: currentLevelJSON, fromLevelEditor: currentFromLevelEditor });
