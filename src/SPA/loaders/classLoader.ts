@@ -1017,7 +1017,10 @@ export async function loadClassProfesor(id,page='1') {
     const cookie = sessionCookieValue();
     if((cookie !== null)){
 
-   
+      const allLevels = await fetchRequest(
+        `${API_ENDPOINT}/level/class/${id}`,
+        "GET"
+      );
 
       const res = await fetchRequest(
         `${API_ENDPOINT}/level/class/${id}/page/${page}`,
@@ -1066,16 +1069,6 @@ export async function loadClassProfesor(id,page='1') {
             }); 
             
             await fillContent(divElement, levelsWithStatistics, generateLevelDiv);
- 
-
-            /*
-            let totalPages=(levels.length/itemsPerPage);if((levels.length%itemsPerPage)!=0)totalPages++;
-            loadPageNav(totalPages,page);
-            
-            document.querySelectorAll("a.getPage").forEach((page) => {
-              page.addEventListener("click", loadPagination);
-            });
-            */
             let totalPages=(levelCount/itemsPerPage);if((levelCount%itemsPerPage)!=0)totalPages++;
             // Add getLevel event listener
             loadPageNav(id,totalPages,page);
@@ -1106,7 +1099,7 @@ export async function loadClassProfesor(id,page='1') {
           });
     
           document.getElementById("addLevels").addEventListener("click", (e: MouseEvent) => {
-             AddLevelsMenu(userLevels,levels,classId); 
+             AddLevelsMenu(userLevels,allLevels,classId); 
           });
           document.getElementById("seeCode").addEventListener("click", (e: MouseEvent) => {
              appendSeeCodeModal(classCode.code,classId);
