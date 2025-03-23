@@ -253165,14 +253165,14 @@ async function generateLevelDiv$3(level) {
       </div>
     </div>`;
 }
-async function loadPagination$1(event) {
+async function loadPagination$2(event) {
     event.preventDefault();
     const anchorTag = event.target.closest("a.getPage");
     const page = anchorTag.href.split("level/community/levels/")[1];
     history.pushState({ page }, "", `community?page=${page}`);
-    loadLevels$1(page);
+    loadLevels$2(page);
 }
-async function loadPageNav$1(pages, currentPage) {
+async function loadPageNav$2(pages, currentPage) {
     const list = document.getElementById("paginationList");
     let items = '';
     for (let i = 1; i <= pages; i++) {
@@ -253183,10 +253183,10 @@ async function loadPageNav$1(pages, currentPage) {
     }
     list.innerHTML = items;
 }
-async function filterSearch() {
-    loadLevels$1(1);
+async function filterSearch$1() {
+    loadLevels$2(1);
 }
-async function loadLevels$1(page) {
+async function loadLevels$2(page) {
     const divElement = document.getElementById("categories");
     const selectData = $('#levelSelect').select2('data');
     const map = selectData.map(i => i.text);
@@ -253198,13 +253198,13 @@ async function loadLevels$1(page) {
     if ((res.count % itemsPerPage$1) != 0)
         totalPages++;
     await fillContent(divElement, levelsWithStatistics, generateLevelDiv$3);
-    loadPageNav$1(totalPages, page);
+    loadPageNav$2(totalPages, page);
     // Add getLevel event listener
     document.querySelectorAll("a.getLevel").forEach((level) => {
         level.addEventListener("click", playLevel$3);
     });
     document.querySelectorAll("a.getPage").forEach((page) => {
-        page.addEventListener("click", loadPagination$1);
+        page.addEventListener("click", loadPagination$2);
     });
 }
 /**
@@ -253224,9 +253224,9 @@ async function loadCommunity(page = '1') {
     // Load placeholders
     await fillContent(divElement, new Array(10), generateCommunityDivPlaceholder$1);
     $('#levelSelect').select2({ placeholder: "Filter by tags", allowClear: true });
-    $('#filterButton').on("click", filterSearch);
+    $('#filterButton').on("click", filterSearch$1);
     try {
-        loadLevels$1(page);
+        loadLevels$2(page);
     }
     catch (error) {
         if (error.status === 503) { // Offline mode
@@ -254306,16 +254306,16 @@ async function useRegister$1(modal) {
         console.error('Error general:', error);
     }
 }
-async function loadPagination(event) {
+async function loadPagination$1(event) {
     event.preventDefault();
     const anchorTag = event.target.closest("a.getPage");
     const ruta = anchorTag.href.split("level/class/")[1];
     const id = ruta.split("/page/")[0];
     const page = ruta.split("/page/")[1];
     history.pushState({ page }, "", `class?page=${page}`);
-    loadLevels(id, page);
+    loadLevels$1(id, page);
 }
-async function loadLevels(id, page) {
+async function loadLevels$1(id, page) {
     const divElement = document.getElementById("categories");
     const res = await fetchRequest(`${API_ENDPOINT$4}/level/class/${id}/page/${page}`, "GET");
     const levels = res.levels;
@@ -254325,13 +254325,13 @@ async function loadLevels(id, page) {
     if ((levelCount % itemsPerPage) != 0)
         totalPages++;
     await fillContent(divElement, levelsWithStatistics, generateLevelDiv$1);
-    loadPageNav(id, totalPages, page);
+    loadPageNav$1(id, totalPages, page);
     // Add getLevel event listener
     document.querySelectorAll("a.getLevel").forEach((level) => {
         level.addEventListener("click", playLevel$1);
     });
     document.querySelectorAll("a.getPage").forEach((page) => {
-        page.addEventListener("click", loadPagination);
+        page.addEventListener("click", loadPagination$1);
     });
 }
 async function loadLevelStats(levels) {
@@ -254357,7 +254357,7 @@ async function loadLevelStats(levels) {
     });
     return levelsWithStatistics;
 }
-async function loadPageNav(classId, pages, currentPage) {
+async function loadPageNav$1(classId, pages, currentPage) {
     const list = document.getElementById("paginationList");
     let items = '';
     for (let i = 1; i <= pages; i++) {
@@ -254381,6 +254381,7 @@ async function loadClassProfesor(id, page = '1') {
     try {
         const cookie = sessionCookieValue();
         if ((cookie !== null)) {
+            const allLevels = await fetchRequest(`${API_ENDPOINT$4}/level/class/${id}`, "GET");
             const res = await fetchRequest(`${API_ENDPOINT$4}/level/class/${id}/page/${page}`, "GET");
             const levels = res.levels;
             const levelCount = res.count;
@@ -254408,25 +254409,17 @@ async function loadClassProfesor(id, page = '1') {
                             };
                         });
                         await fillContent(divElement, levelsWithStatistics, generateLevelDiv$1);
-                        /*
-                        let totalPages=(levels.length/itemsPerPage);if((levels.length%itemsPerPage)!=0)totalPages++;
-                        loadPageNav(totalPages,page);
-                        
-                        document.querySelectorAll("a.getPage").forEach((page) => {
-                          page.addEventListener("click", loadPagination);
-                        });
-                        */
                         let totalPages = (levelCount / itemsPerPage);
                         if ((levelCount % itemsPerPage) != 0)
                             totalPages++;
                         // Add getLevel event listener
-                        loadPageNav(id, totalPages, page);
+                        loadPageNav$1(id, totalPages, page);
                         // Add getLevel event listener
                         document.querySelectorAll("a.getLevel").forEach((level) => {
                             level.addEventListener("click", playLevel$1);
                         });
                         document.querySelectorAll("a.getPage").forEach((page) => {
-                            page.addEventListener("click", loadPagination);
+                            page.addEventListener("click", loadPagination$1);
                         });
                     }
                     else {
@@ -254446,7 +254439,7 @@ async function loadClassProfesor(id, page = '1') {
                         AddSetsMenu(userSets, sets, classId, userLevels, cookie.id);
                     });
                     document.getElementById("addLevels").addEventListener("click", (e) => {
-                        AddLevelsMenu(userLevels, levels, classId);
+                        AddLevelsMenu(userLevels, allLevels, classId);
                     });
                     document.getElementById("seeCode").addEventListener("click", (e) => {
                         appendSeeCodeModal(classCode.code, classId);
@@ -254535,13 +254528,13 @@ async function loadClass(id, page = '1') {
                         let totalPages = (levelCount / itemsPerPage);
                         if ((levelCount % itemsPerPage) != 0)
                             totalPages++;
-                        loadPageNav(id, totalPages, page);
+                        loadPageNav$1(id, totalPages, page);
                         // Add getLevel event listener
                         document.querySelectorAll("a.getLevel").forEach((level) => {
                             level.addEventListener("click", playLevel$1);
                         });
                         document.querySelectorAll("a.getPage").forEach((page) => {
-                            page.addEventListener("click", loadPagination);
+                            page.addEventListener("click", loadPagination$1);
                         });
                     }
                     else {
@@ -254733,13 +254726,33 @@ function getRowHTML(user) {
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="sets"></div>
           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">TUS NIVELES</h2>
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
+          <div class="container mb-3">
+            <div id="selectDiv" class="mt-3 p-1">
+              <select id="levelSelect" name="tags[]" multiple="multiple" style="width: 100%">
+                <option value="LP">Loops</option>
+                <option value="VR">Variable</option>
+                <option value="BS">Basic</option>
+              </select>
+            </div>
+            <div class="mt-3">
+              <button class="btn btn-primary w-100 px-5" type="button" id="filterButton"><i class="bi bi-search"></i> Search
+              </button>
+            </div>
+          </div>
           <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2 w-75 mx-auto" id="display"></div>
+          <div id="pageDiv" class="d-flex justify-content-center mt-3">
+            <nav aria-label="pages">
+              <ul class="pagination pagination-lg" id="paginationList">
+              </ul>
+            </nav>
+          </div>
   `;
 }
 function getRowHTML2() {
     return `<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">TUS NIVELES</h2>
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="levels"></div>
+           <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2 w-75 mx-auto" id="display"></div>
   `;
 }
 function sessionCookieValue() {
@@ -254899,7 +254912,15 @@ function appendLoginModal() {
         });
     }
 }
-function appendCreateSetModal(userLevels, user) {
+async function appendCreateSetModal(user) {
+    const itemsPerPage = 6;
+    let sdata = { user_id: user.id, page: 1, tags: "" };
+    const res = await fetchRequest(`${API_ENDPOINT$3}/level/paginatedUserLevels/${JSON.stringify(sdata)}`, "GET");
+    const userLevels = res.rows;
+    let totalPages = (res.count / itemsPerPage);
+    if ((res.count % itemsPerPage) != 0)
+        totalPages++;
+    loadPageNav(totalPages, 1, "paginationList", "getPage");
     let createSetModalHtml = `
   <div id="createSetModal" class="modal fade" tabindex="-1" aria-labelledby="createSetModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -254920,6 +254941,17 @@ function appendCreateSetModal(userLevels, user) {
                       </div>
                       <div class="mb-3">
                           <label for="setLevels" class="form-label">Añadir Niveles</label>
+                          <div class="mt-3 px-2">
+                            <select id="modalLevelSelect" name="tags[]" multiple="multiple" style="width: 75%">
+                              <option value="LP">Loops</option>
+                              <option value="VR">Variable</option>
+                              <option value="BS">Basic</option>
+                            </select>
+                          </div>
+                          <div class="mt-3">
+                            <button class="btn btn-primary w-75" type="button" id="modalFilterButton"><i class="bi bi-search"></i> Search
+                            </button>
+                          </div>
                           <div id="setLevels" class="form-check">
                               <!-- Los niveles se llenarán dinámicamente con checkboxes -->
                               ${userLevels.map(level => `
@@ -254933,6 +254965,12 @@ function appendCreateSetModal(userLevels, user) {
                           </div>
                       </div>
                   </form>
+                  <div id="pageDiv" class="d-flex justify-content-center mt-3">
+                    <nav aria-label="pages">
+                      <ul class="pagination" id="createSetPaginationList">
+                      </ul>
+                    </nav>
+                  </div>
               </div>
               <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -254944,12 +254982,18 @@ function appendCreateSetModal(userLevels, user) {
     let createSetModal = document.createElement("div");
     createSetModal.innerHTML = createSetModalHtml;
     document.body.appendChild(createSetModal);
+    $('#modalLevelSelect').select2({ placeholder: "Filter by tags", allowClear: true, dropdownParent: $('#createSetModal') });
+    $('#modalFilterButton').on("click", () => { loadModalLevels(1); });
     let createSetModalElement = document.querySelector("#createSetModal");
     let createSetModalInstance = new Modal(createSetModalElement);
     createSetModalElement.addEventListener("hidden.bs.modal", function () {
         createSetModalElement.remove();
     });
     createSetModalInstance.show();
+    loadPageNav(totalPages, 1, "createSetPaginationList", "getModalPage");
+    document.querySelectorAll("a.getModalPage").forEach((page) => {
+        page.addEventListener("click", loadModalPagination);
+    });
     document.getElementById("saveSetBtn")?.addEventListener("click", async function (event) {
         event.preventDefault();
         let setName = document.getElementById("setName").value.trim();
@@ -255177,6 +255221,92 @@ async function playLevel(event) {
     history.pushState({ id }, "", `classLevel?id=${id}`);
     route();
 }
+async function loadPageNav(pages, currentPage, paginationList, className) {
+    const user = sessionCookieValue();
+    const list = document.getElementById(paginationList);
+    let items = '';
+    for (let i = 1; i <= pages; i++) {
+        if (i == currentPage)
+            items += `<li class="page-item"><a class="page-link active ${className}" href="${API_ENDPOINT$3}/level/userlevels/${user.id}/${i}">${i}</a></li>`;
+        else
+            items += `<li class="page-item"><a class="page-link ${className}" href="${API_ENDPOINT$3}/level/userlevels/${user.id}/${i}">${i}</a></li>`;
+    }
+    list.innerHTML = items;
+}
+async function loadPagination(event) {
+    event.preventDefault();
+    const user = sessionCookieValue();
+    const anchorTag = event.target.closest("a.getPage");
+    const page = anchorTag.href.split(`level/userlevels/${user.id}/`)[1];
+    loadLevels(page);
+}
+async function loadModalPagination(event) {
+    event.preventDefault();
+    const user = sessionCookieValue();
+    const anchorTag = event.target.closest("a.getModalPage");
+    const page = anchorTag.href.split(`level/userlevels/${user.id}/`)[1];
+    loadModalLevels(page);
+}
+async function loadModalLevels(page) {
+    const itemsPerPage = 6;
+    const user = sessionCookieValue();
+    const selectData = $('#modalLevelSelect').select2('data');
+    const map = selectData.map(i => i.text);
+    let sdata = { user_id: user.id, page: page, tags: map };
+    const res = await fetchRequest(`${API_ENDPOINT$3}/level/paginatedUserLevels/${JSON.stringify(sdata)}`, "GET");
+    let totalPages = (res.count / itemsPerPage);
+    if ((res.count % itemsPerPage) != 0)
+        totalPages++;
+    loadPageNav(totalPages, page, "createSetPaginationList", "getModalPage");
+    let levelDiv = document.getElementById("setLevels");
+    levelDiv.innerHTML = res.rows.map(level => `
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="${level.id}" id="level-${level.id}">
+      <label class="form-check-label" for="level-${level.id}">
+        ${level.title}
+      </label>
+    </div>
+  `).join('');
+    document.querySelectorAll("a.getModalPage").forEach((page) => {
+        page.addEventListener("click", loadModalPagination);
+    });
+}
+async function loadLevels(page) {
+    const user = sessionCookieValue();
+    const itemsPerPage = 6;
+    document.getElementById("categories");
+    const selectData = $('#levelSelect').select2('data');
+    const map = selectData.map(i => i.text);
+    let sdata = { user_id: user.id, page: page, tags: map };
+    const res = await fetchRequest(`${API_ENDPOINT$3}/level/paginatedUserLevels/${JSON.stringify(sdata)}`, "GET");
+    const levels = res.rows;
+    let totalPages = (res.count / itemsPerPage);
+    if ((res.count % itemsPerPage) != 0)
+        totalPages++;
+    loadPageNav(totalPages, page, "paginationList", "getPage");
+    if (levels.length != 0) {
+        const levelDiv = document.getElementById("display");
+        await fillContent(levelDiv, levels, generateLevelDiv);
+        document.querySelectorAll("a.levels").forEach((levelDiv) => {
+            levels.addEventListener("click", loadLevel);
+        });
+    }
+    else {
+        var messages = [{ msg: "No levels found", desc: "You can create levels with the level editor", buttonName: "", buttonMsg: "" }];
+        const textElement = document.getElementById("display");
+        await fillContent(textElement, messages, generateMSG);
+    }
+    // Add getLevel event listener
+    document.querySelectorAll("a.getLevel").forEach((level) => {
+        level.addEventListener("click", playLevel);
+    });
+    document.querySelectorAll("a.getPage").forEach((page) => {
+        page.addEventListener("click", loadPagination);
+    });
+}
+async function filterSearch() {
+    loadLevels(1);
+}
 async function loadProfile() {
     try {
         const user = sessionCookieValue();
@@ -255189,7 +255319,10 @@ async function loadProfile() {
         const divElement = document.getElementById("categories");
         const officialLevelCompleted = await fetchRequest(`${API_ENDPOINT$3}/user/officialLevelsCompleted`, "GET", null, 'include');
         const totalStars = await fetchRequest(`${API_ENDPOINT$3}/user/totalStars/${user.id}`, "GET");
-        const userLevels = await fetchRequest(`${API_ENDPOINT$3}/level/userLevels/${user.id}`, "GET");
+        /*const userLevels = await fetchRequest(
+          `${API_ENDPOINT}/level/userLevels/${user.id}`,
+          "GET"
+        );*/
         const userSets = await fetchRequest(`${API_ENDPOINT$3}/set/userSets/${user.id}`, "GET");
         // divElement.innerHTML = await generateProfileDiv(user, totalStars, officialLevelCompleted);
         const data = {
@@ -255197,19 +255330,10 @@ async function loadProfile() {
             totalStars: totalStars,
             officialLevelCompleted: officialLevelCompleted,
         };
+        $('#levelSelect').select2({ placeholder: "Filter by tags", allowClear: true });
+        $('#filterButton').on("click", filterSearch);
         await fillContent(divElement, [data], generateProfileDiv);
-        if (userLevels.length != 0) {
-            const levelDiv = document.getElementById("display");
-            await fillContent(levelDiv, userLevels, generateLevelDiv);
-            document.querySelectorAll("a.levels").forEach((levelDiv) => {
-                userLevels.addEventListener("click", loadLevel);
-            });
-        }
-        else {
-            var messages = [{ msg: "Aun no has creado ningun nivel", desc: "Crea niveles en el editor para ver tus niveles", buttonName: "", buttonMsg: "" }];
-            const textElement = document.getElementById("levels");
-            await fillContent(textElement, messages, generateMSG);
-        }
+        loadLevels(1);
         if (userSets.length != 0) {
             const setDiv = document.getElementById("sets");
             await fillContent(setDiv, userSets, generateSetDiv);
@@ -255220,7 +255344,7 @@ async function loadProfile() {
         // Add getLevel event listener
         if (user.role == "Profesor") {
             document.getElementById("createSetBtn").addEventListener("click", (e) => {
-                appendCreateSetModal(userLevels, user);
+                appendCreateSetModal(user);
             });
         }
         document.querySelectorAll("a.getLevel").forEach((level) => {
@@ -255904,7 +256028,7 @@ class LevelPlayer extends phaserExports.Scene {
             check.checked = true;
         console.log(JSON.stringify(toolboxContent));
     };
-    getAppendCreateLevelModal(userId, publish) {
+    getAppendCreateLevelModal(userId, canPublish) {
         let createModal = `
         <div id="levelCreateModal" class="modal fade" tabindex="-1" aria-labelledby="createLevelLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -255931,6 +256055,10 @@ class LevelPlayer extends phaserExports.Scene {
                                   <option value="BS">Basic</option>
                                 </select>
                             </div>
+                            <div class="mb-3">
+                              <input class="form-check-input" type="checkbox" value="" id="publishCheck" ${canPublish ? 'checked' : 'disabled'}>
+                              <label for="publishCheck" class="form-label" >${canPublish ? 'Publish this level' : `Clear this level to be able to publish`}</label>
+                            </div>
                         </form>
                     </div>
                     <div class="modal-footer">
@@ -255955,6 +256083,7 @@ class LevelPlayer extends phaserExports.Scene {
                 // Preguntar al usuario el nombre del nivel
                 const levelName = document.getElementById("level_name").value;
                 const levelDescription = document.getElementById("level_desc").value;
+                const publishCheck = document.getElementById("publishCheck").checked;
                 const selectData = $('#tagSelect').select2('data');
                 const tags = selectData.map(i => i.text);
                 const levelData = {
@@ -255966,7 +256095,7 @@ class LevelPlayer extends phaserExports.Scene {
                     data: JSON.stringify(this.levelJSON),
                     minBlocks: this.levelJSON.MinBlocksUsed,
                     description: levelDescription,
-                    publish: publish,
+                    publish: canPublish ? publishCheck : false,
                     tags: tags
                 };
                 try {
