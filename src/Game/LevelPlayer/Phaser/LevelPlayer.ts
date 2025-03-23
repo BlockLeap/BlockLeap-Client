@@ -683,7 +683,7 @@ export default class LevelPlayer extends Phaser.Scene {
     console.log(JSON.stringify(toolboxContent));
   }
 
-  private getAppendCreateLevelModal(userId,publish){
+  private getAppendCreateLevelModal(userId,canPublish){
     let createModal= `
         <div id="levelCreateModal" class="modal fade" tabindex="-1" aria-labelledby="createLevelLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -709,6 +709,10 @@ export default class LevelPlayer extends Phaser.Scene {
                                   <option value="VR">Variable</option>
                                   <option value="BS">Basic</option>
                                 </select>
+                            </div>
+                            <div class="mb-3">
+                              <input class="form-check-input" type="checkbox" value="" id="publishCheck" ${canPublish ?'checked':'disabled'}>
+                              <label for="publishCheck" class="form-label" >${canPublish ?'Publish this level':`Clear this level to be able to publish`}</label>
                             </div>
                         </form>
                     </div>
@@ -737,6 +741,7 @@ export default class LevelPlayer extends Phaser.Scene {
           // Preguntar al usuario el nombre del nivel
           const levelName = (document.getElementById("level_name") as HTMLInputElement).value;
           const levelDescription= (document.getElementById("level_desc") as HTMLInputElement).value;
+          const publishCheck=(document.getElementById("publishCheck") as HTMLInputElement).checked;
           const selectData=$('#tagSelect').select2('data');
           const tags=selectData.map(i=>i.text);
           const levelData = {
@@ -748,7 +753,7 @@ export default class LevelPlayer extends Phaser.Scene {
             data: JSON.stringify(this.levelJSON),
             minBlocks: this.levelJSON.MinBlocksUsed,
             description: levelDescription,
-            publish:publish,
+            publish:canPublish?publishCheck:false,
             tags:tags
           };
           try {
