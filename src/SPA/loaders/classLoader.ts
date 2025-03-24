@@ -334,7 +334,7 @@ export function StudentsMenu(students) {
 }
 
 
-export function AddSetsMenu(sets,classSets,groupId) {
+export function AddSetsMenu(sets,classSets,groupId,userLevels,user) {
   let existingDropdown = document.getElementById("dropdownMenu");
   if (existingDropdown) {
     existingDropdown.remove();
@@ -419,7 +419,10 @@ let unselectedOptionsHTML = unselectedSets
   </div>
   <div style="display: flex; justify-content: center; margin-top: 15px;">
     <button id="saveChangesButton" style="padding: 10px 20px; background-color: green; color: white; border: none; border-radius: 5px; cursor: pointer;">
-      Guardar Cambios
+      Save changes
+    </button>
+    <button id="createSetButton" style="padding: 10px 20px; background-color: green; color: white; border: none; border-radius: 5px; cursor: pointer;">
+      Create Set
     </button>
   </div>
 `;
@@ -441,7 +444,126 @@ let unselectedOptionsHTML = unselectedSets
     handleSaveSetsChanges(sets, setLevelTitles,groupId);
     dropdown.remove();
      });
+
+     document.getElementById("createSetButton")?.addEventListener("click", function () {
+     createSet(userLevels, user);
+      dropdown.remove();
+    });
 }
+
+function createSet(userLevels: {id: string, title: string}[], user) {
+  let createSetModalHtml = `
+  <div id="createSetModal" class="modal fade" tabindex="-1" aria-labelledby="createSetModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+          <div class="modal-content">
+              <div class="modal-header bg-primary text-white">
+                  <h5 class="modal-title" id="createSetModalLabel">Crear Set de Niveles</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <form id="createSetForm">
+                      <div class="mb-3">
+                          <label for="setName" class="form-label">Nombre del Set</label>
+                          <input type="text" class="form-control" id="setName" required>
+                      </div>
+                     <div>
+                          <label for="setDescription" class="form-label">Descripción</label>
+                          <textarea class="form-control" id="setDescription" rows="3" required></textarea>
+                      </div>
+                      <div class="mb-3">
+                          <label for="setLevels" class="form-label">Añadir Niveles</label>
+                          <div id="setLevels" class="form-check">
+                              <!-- Los niveles se llenarán dinámicamente con checkboxes -->
+                              ${userLevels.map(level => `
+                                <div class="form-check">
+                                  <input class="form-check-input" type="checkbox" value="${level.id}" id="level-${level.id}">
+                                  <label class="form-check-label" for="level-${level.id}">
+                                    ${level.title}
+                                  </label>
+                                </div>
+                              `).join('')}
+                          </div>
+                      </div>
+                  </form>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="submit" class="btn btn-primary" id="saveSetBtn">Guardar Set</button>
+              </div>
+          </div>
+      </div>
+  </div>`;
+
+  let createSetModal = document.createElement("div");
+  createSetModal.innerHTML = createSetModalHtml;
+  document.body.appendChild(createSetModal);
+
+  let createSetModalElement = document.querySelector("#createSetModal");
+  let createSetModalInstance = new bootstrap.Modal(createSetModalElement);
+
+  createSetModalElement.addEventListener("hidden.bs.modal", function () {
+      createSetModalElement.remove();
+  });
+
+  createSetModalInstance.show();
+
+  document.getElementById("saveSetBtn")?.addEventListener("click", async function (event) {
+      event.preventDefault();
+      let setName = (document.getElementById("setName") as HTMLInputElement).value.trim();
+      let setDescription = (document.getElementById("setDescription") as HTMLTextAreaElement).value.trim();
+      
+      // Obtener los niveles seleccionados (IDs de los checkboxes marcados)
+      const selectedLevels = Array.from((document.getElementById("setLevels") as HTMLDivElement).querySelectorAll('input[type="checkbox"]:checked'))
+                                  .map((checkbox: HTMLInputElement) => checkbox.value);
+
+      if (setName === "" || setDescription === "") {
+          alert("Por favor, completa todos los campos.");
+          return;
+      }
+
+      let postData = {
+          name: setName,
+          description: setDescription,
+          levels: selectedLevels,
+          user:user
+      };
+
+      try {
+           await fetchRequest(
+              `${API_ENDPOINT}/set/create/`,
+              "POST",
+              JSON.stringify(postData)
+            );
+          createSetModalInstance.hide();
+          
+  // Crear un mensaje de "Cambios Guardados"
+  const successMessage = document.createElement("div");
+  successMessage.textContent = "Cambios guardados correctamente!";
+  successMessage.style.position = "fixed";
+  successMessage.style.top = "20px";
+  successMessage.style.left = "50%";
+  successMessage.style.transform = "translateX(-50%)";
+  successMessage.style.padding = "10px 20px";
+  successMessage.style.backgroundColor = "green";
+  successMessage.style.color = "white";
+  successMessage.style.borderRadius = "5px";
+  successMessage.style.fontSize = "16px";
+  successMessage.style.zIndex = "1000";
+
+  // Insertar el mensaje en el body
+  document.body.appendChild(successMessage);
+
+  
+  setTimeout(() => {
+  successMessage.remove();
+  }, 3000);
+      } catch (error) {
+          console.error('Error al crear el set de niveles:', error);
+          alert("Hubo un error al crear el set de niveles.");
+      }
+  });
+}
+
 
 async function handleSaveSetsChanges(sets, setLevelTitles,groupId) {
   // Obtener todos los checkboxes marcados
@@ -895,7 +1017,10 @@ export async function loadClassProfesor(id,page='1') {
     const cookie = sessionCookieValue();
     if((cookie !== null)){
 
-   
+      const allLevels = await fetchRequest(
+        `${API_ENDPOINT}/level/class/${id}`,
+        "GET"
+      );
 
       const res = await fetchRequest(
         `${API_ENDPOINT}/level/class/${id}/page/${page}`,
@@ -944,16 +1069,6 @@ export async function loadClassProfesor(id,page='1') {
             }); 
             
             await fillContent(divElement, levelsWithStatistics, generateLevelDiv);
- 
-
-            /*
-            let totalPages=(levels.length/itemsPerPage);if((levels.length%itemsPerPage)!=0)totalPages++;
-            loadPageNav(totalPages,page);
-            
-            document.querySelectorAll("a.getPage").forEach((page) => {
-              page.addEventListener("click", loadPagination);
-            });
-            */
             let totalPages=(levelCount/itemsPerPage);if((levelCount%itemsPerPage)!=0)totalPages++;
             // Add getLevel event listener
             loadPageNav(id,totalPages,page);
@@ -980,11 +1095,11 @@ export async function loadClassProfesor(id,page='1') {
 
           
           document.getElementById("addSets").addEventListener("click", (e: MouseEvent) => {
-            AddSetsMenu(userSets,sets,classId); 
+            AddSetsMenu(userSets,sets,classId,userLevels,cookie.id); 
           });
     
           document.getElementById("addLevels").addEventListener("click", (e: MouseEvent) => {
-             AddLevelsMenu(userLevels,levels,classId); 
+             AddLevelsMenu(userLevels,allLevels,classId); 
           });
           document.getElementById("seeCode").addEventListener("click", (e: MouseEvent) => {
              appendSeeCodeModal(classCode.code,classId);

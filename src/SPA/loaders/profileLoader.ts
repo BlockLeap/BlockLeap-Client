@@ -27,7 +27,26 @@ function getRowHTML(user) {
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="sets"></div>
           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">TUS NIVELES</h2>
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
+          <div class="container mb-3">
+            <div id="selectDiv" class="mt-3 p-1">
+              <select id="levelSelect" name="tags[]" multiple="multiple" style="width: 100%">
+                <option value="LP">Loops</option>
+                <option value="VR">Variable</option>
+                <option value="BS">Basic</option>
+              </select>
+            </div>
+            <div class="mt-3">
+              <button class="btn btn-primary w-100 px-5" type="button" id="filterButton"><i class="bi bi-search"></i> Search
+              </button>
+            </div>
+          </div>
           <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2 w-75 mx-auto" id="display"></div>
+          <div id="pageDiv" class="d-flex justify-content-center mt-3">
+            <nav aria-label="pages">
+              <ul class="pagination pagination-lg" id="paginationList">
+              </ul>
+            </nav>
+          </div>
   `;
 }
 
@@ -35,6 +54,7 @@ function getRowHTML2() {
   return `<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">TUS NIVELES</h2>
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="levels"></div>
+           <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2 w-75 mx-auto" id="display"></div>
   `;
 }
 
@@ -221,7 +241,17 @@ export function appendLoginModal() {
   }
 }
 
-function appendCreateSetModal(userLevels: {id: string, title: string}[], user) {
+async function appendCreateSetModal(user) {
+  const itemsPerPage=6;
+  let sdata={user_id:user.id,page:1,tags:""};
+  const res = await fetchRequest(
+    `${API_ENDPOINT}/level/paginatedUserLevels/${JSON.stringify(sdata)}`,
+    "GET"
+  );
+  const userLevels= res.rows;
+  let totalPages=(res.count/itemsPerPage);if((res.count%itemsPerPage)!=0)totalPages++;
+  loadPageNav(totalPages,1,"paginationList","getPage");
+
   let createSetModalHtml = `
   <div id="createSetModal" class="modal fade" tabindex="-1" aria-labelledby="createSetModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -242,6 +272,17 @@ function appendCreateSetModal(userLevels: {id: string, title: string}[], user) {
                       </div>
                       <div class="mb-3">
                           <label for="setLevels" class="form-label">Añadir Niveles</label>
+                          <div class="mt-3 px-2">
+                            <select id="modalLevelSelect" name="tags[]" multiple="multiple" style="width: 75%">
+                              <option value="LP">Loops</option>
+                              <option value="VR">Variable</option>
+                              <option value="BS">Basic</option>
+                            </select>
+                          </div>
+                          <div class="mt-3">
+                            <button class="btn btn-primary w-75" type="button" id="modalFilterButton"><i class="bi bi-search"></i> Search
+                            </button>
+                          </div>
                           <div id="setLevels" class="form-check">
                               <!-- Los niveles se llenarán dinámicamente con checkboxes -->
                               ${userLevels.map(level => `
@@ -255,6 +296,12 @@ function appendCreateSetModal(userLevels: {id: string, title: string}[], user) {
                           </div>
                       </div>
                   </form>
+                  <div id="pageDiv" class="d-flex justify-content-center mt-3">
+                    <nav aria-label="pages">
+                      <ul class="pagination" id="createSetPaginationList">
+                      </ul>
+                    </nav>
+                  </div>
               </div>
               <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -268,6 +315,10 @@ function appendCreateSetModal(userLevels: {id: string, title: string}[], user) {
   createSetModal.innerHTML = createSetModalHtml;
   document.body.appendChild(createSetModal);
 
+
+  $('#modalLevelSelect').select2({placeholder:"Filter by tags",allowClear:true,dropdownParent: $('#createSetModal')});
+  $('#modalFilterButton').on("click",()=>{loadModalLevels(1)});
+
   let createSetModalElement = document.querySelector("#createSetModal");
   let createSetModalInstance = new bootstrap.Modal(createSetModalElement);
 
@@ -276,6 +327,11 @@ function appendCreateSetModal(userLevels: {id: string, title: string}[], user) {
   });
 
   createSetModalInstance.show();
+
+  loadPageNav(totalPages,1,"createSetPaginationList","getModalPage");
+  document.querySelectorAll("a.getModalPage").forEach((page) => {
+    page.addEventListener("click", loadModalPagination);
+  });
 
   document.getElementById("saveSetBtn")?.addEventListener("click", async function (event) {
       event.preventDefault();
@@ -547,6 +603,96 @@ async function playLevel(event) {
 
   route();
 }
+
+async function loadPageNav(pages,currentPage,paginationList,className){
+  const user = sessionCookieValue();
+  const list= document.getElementById(paginationList);
+  let items='';
+  for(let i=1; i<=pages;i++){
+    if(i==currentPage)
+      items+=`<li class="page-item"><a class="page-link active ${className}" href="${API_ENDPOINT}/level/userlevels/${user.id}/${i}">${i}</a></li>`
+    else
+      items+=`<li class="page-item"><a class="page-link ${className}" href="${API_ENDPOINT}/level/userlevels/${user.id}/${i}">${i}</a></li>`
+  }
+  list.innerHTML=items;
+}
+async function loadPagination(event) {
+  event.preventDefault();
+  const user = sessionCookieValue();
+  const anchorTag = event.target.closest("a.getPage");   
+  const page = anchorTag.href.split(`level/userlevels/${user.id}/`)[1];
+  loadLevels(page);
+}
+
+async function loadModalPagination(event) {
+  event.preventDefault();
+  const user = sessionCookieValue();
+  const anchorTag = event.target.closest("a.getModalPage");   
+  const page = anchorTag.href.split(`level/userlevels/${user.id}/`)[1];
+  loadModalLevels(page);
+}
+async function loadModalLevels(page){
+  const itemsPerPage=6;
+  const user = sessionCookieValue();
+  const selectData=$('#modalLevelSelect').select2('data');
+  const map=selectData.map(i=>i.text);
+  let sdata={user_id:user.id,page:page,tags:map};
+  const res = await fetchRequest(
+    `${API_ENDPOINT}/level/paginatedUserLevels/${JSON.stringify(sdata)}`,
+    "GET"
+  );
+  let totalPages=(res.count/itemsPerPage);if((res.count%itemsPerPage)!=0)totalPages++;
+  loadPageNav(totalPages,page,"createSetPaginationList","getModalPage");
+  let levelDiv=document.getElementById("setLevels");
+  levelDiv.innerHTML=res.rows.map(level => `
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="${level.id}" id="level-${level.id}">
+      <label class="form-check-label" for="level-${level.id}">
+        ${level.title}
+      </label>
+    </div>
+  `).join('');
+  document.querySelectorAll("a.getModalPage").forEach((page) => {
+    page.addEventListener("click", loadModalPagination);
+  });
+}
+async function loadLevels(page){
+  const user = sessionCookieValue();
+  const itemsPerPage=6;
+  const divElement = document.getElementById("categories");
+  const selectData=$('#levelSelect').select2('data');
+  const map=selectData.map(i=>i.text);
+  let sdata={user_id:user.id,page:page,tags:map};
+  const res = await fetchRequest(
+    `${API_ENDPOINT}/level/paginatedUserLevels/${JSON.stringify(sdata)}`,
+    "GET"
+  );
+  const levels= res.rows;
+  let totalPages=(res.count/itemsPerPage);if((res.count%itemsPerPage)!=0)totalPages++;
+  loadPageNav(totalPages,page,"paginationList","getPage");
+  if(levels.length!=0){
+    const levelDiv = document.getElementById("display");
+    await fillContent(levelDiv, levels, generateLevelDiv);
+    document.querySelectorAll("a.levels").forEach((levelDiv) => {
+      levels.addEventListener("click", loadLevel);
+    });
+  }else{
+    var messages=[{msg:"No levels found",desc:"You can create levels with the level editor",buttonName:"",buttonMsg:""}];
+    const textElement = document.getElementById("display");
+    await fillContent(textElement, messages, generateMSG);
+  }
+    // Add getLevel event listener
+  document.querySelectorAll("a.getLevel").forEach((level) => {
+    level.addEventListener("click", playLevel);
+  });
+  document.querySelectorAll("a.getPage").forEach((page) => {
+    page.addEventListener("click", loadPagination);
+  });
+}
+async function filterSearch(){
+  loadLevels(1);
+}
+
 export default async function loadProfile() {
 
   
@@ -570,10 +716,11 @@ export default async function loadProfile() {
       `${API_ENDPOINT}/user/totalStars/${user.id}`,
       "GET"
     );
-    const userLevels = await fetchRequest(
+
+    /*const userLevels = await fetchRequest(
       `${API_ENDPOINT}/level/userLevels/${user.id}`,
       "GET"
-    );
+    );*/  
       const userSets = await fetchRequest(
             `${API_ENDPOINT}/set/userSets/${user.id}`,
             "GET"
@@ -587,21 +734,13 @@ export default async function loadProfile() {
       totalStars: totalStars,
       officialLevelCompleted: officialLevelCompleted,
     }
+    $('#levelSelect').select2({placeholder:"Filter by tags",allowClear:true});
+    $('#filterButton').on("click",filterSearch);
 
     await fillContent(divElement, [data], generateProfileDiv);
-    
-    if(userLevels.length!=0){
-      const levelDiv = document.getElementById("display");
-      await fillContent(levelDiv, userLevels, generateLevelDiv);
-      document.querySelectorAll("a.levels").forEach((levelDiv) => {
-        userLevels.addEventListener("click", loadLevel);
-       });
-  } else{
-      var messages=[{msg:"Aun no has creado ningun nivel",desc:"Crea niveles en el editor para ver tus niveles",buttonName:"",buttonMsg:""}];
-      const textElement = document.getElementById("levels");
-      await fillContent(textElement, messages, generateMSG);
-  }
-    
+
+    loadLevels(1);
+
 
     if(userSets.length!=0){
       const setDiv = document.getElementById("sets");
@@ -614,7 +753,7 @@ export default async function loadProfile() {
      // Add getLevel event listener
      if(user.role=="Profesor"){
       document.getElementById("createSetBtn").addEventListener("click", (e: MouseEvent) => {
-        appendCreateSetModal(userLevels,user); 
+        appendCreateSetModal(user); 
      });
      }
       
