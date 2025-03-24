@@ -1,5 +1,8 @@
 import * as bootstrap from 'bootstrap';
 import { route } from "../../client";
+import $ from 'jquery';
+import 'datatables.net';
+
 
 import config from '../../Game/config.js';
 import { fetchRequest, fillContent } from '../utils';
@@ -25,7 +28,7 @@ function getRowHTML(user) {
            <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">TUS SETS</h2>
             ${createSetButton}
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="sets"></div>
-          <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">TUS NIVELES</h2>
+           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">TUS NIVELES</h2>
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
           <div class="container mb-3">
             <div id="selectDiv" class="mt-3 p-1">
@@ -239,6 +242,59 @@ export function appendLoginModal() {
       await userLogin(loginModalInstance);
     });
   }
+}
+
+function appendSetsTable(userSets) {
+  console.log("Appending sets table with data:", userSets);
+  // Crear el contenedor de la tabla
+  const setsTableHtml = `
+  <div class="container bg-white p-3 rounded-3">
+    <table id="setsTable" class="display" style="width:100%">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Número de Niveles</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${userSets
+          .map(
+            (set) => `
+          <tr>
+            <td><a href="set/${set.id}" class="set">${set.name}</a></td>
+            <td>${set.description}</td>
+            <td>${set.levelCount}</td> 
+          </tr>
+        `
+          )
+          .join("")}
+      </tbody>
+    </table>
+    </div>
+  `;
+
+  // Insertar la tabla en el contenedor con ID "sets"
+  const setsDiv = document.getElementById("sets");
+  setsDiv.innerHTML = setsTableHtml;
+
+  // Inicializar DataTables
+  $(document).ready(function () {
+    $("#setsTable").DataTable();
+  });
+
+  // Agregar eventos a los enlaces de los sets
+  document.querySelectorAll("a.set").forEach((setLink) => {
+    setLink.addEventListener("click", loadSet);
+  });
+}
+
+async function countLevel(setId){
+  const userLevels = await fetchRequest(
+    `${API_ENDPOINT}/level/countSetLevels/${setId}`,
+    "GET"
+  );
+  return userLevels;
 }
 
 async function appendCreateSetModal(user) {
@@ -695,10 +751,6 @@ async function filterSearch(){
 
 export default async function loadProfile() {
 
-  
-  
-
-
   try {const user = sessionCookieValue();
     if(user.role=="Profesor"){
       document.getElementById("content").innerHTML = getRowHTML(user);
@@ -725,7 +777,18 @@ export default async function loadProfile() {
             `${API_ENDPOINT}/set/userSets/${user.id}`,
             "GET"
       );
-
+      if (userSets.length !== 0) {
+        await Promise.all( userSets.map(
+            async (set) => {const count=await countLevel(set.id);
+              set.levelCount= count;
+            }
+            ))
+        await appendSetsTable(userSets);
+      } else {
+        const setsDiv = document.getElementById("sets");
+        setsDiv.innerHTML = `<p class="text-center text-muted">No tienes sets creados.</p>`;
+      }
+    
 
    // divElement.innerHTML = await generateProfileDiv(user, totalStars, officialLevelCompleted);
 
@@ -749,6 +812,34 @@ export default async function loadProfile() {
         userSets.addEventListener("click", loadSet);
        });
   }
+    
+    if(userLevels.length!=0){
+      const levelDiv = document.getElementById("display");
+      await fillContent(levelDiv, userLevels, generateLevelDiv);
+      document.querySelectorAll("a.levels").forEach((levelDiv) => {
+        userLevels.addEventListener("click", loadLevel);
+       });
+  } else{
+      var messages=[{msg:"Aun no has creado ningun nivel",desc:"Crea niveles en el editor para ver tus niveles",buttonName:"",buttonMsg:""}];
+      const textElement = document.getElementById("levels");
+      await fillContent(textElement, messages, generateMSG);
+  }
+    
+ /*  if (userSets.length !== 0) {
+    // Llama a la función para generar la tabla dinámica
+    await appendSetsTable(userSets);
+  } else {
+    // Si no hay sets, muestra un mensaje
+    const setsDiv = document.getElementById("sets");
+    setsDiv.innerHTML = `<p class="text-center text-muted">No tienes sets creados.</p>`;
+  } */
+    // if(userSets.length!=0){
+    //   const setDiv = document.getElementById("sets");
+    //   await fillContent(setDiv, userSets, generateSetDiv);
+    //   document.querySelectorAll("a.set").forEach((userSets) => {
+    //     userSets.addEventListener("click", loadSet);
+    //    });
+  // }
 
      // Add getLevel event listener
      if(user.role=="Profesor"){
