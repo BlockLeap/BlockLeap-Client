@@ -1,6 +1,6 @@
 import * as bootstrap from 'bootstrap';
 import { route } from "../../client";
-import $ from 'jquery';
+//import $ from 'jquery';
 import 'datatables.net';
 
 
@@ -769,10 +769,10 @@ export default async function loadProfile() {
       "GET"
     );
 
-    /*const userLevels = await fetchRequest(
+    const userLevels = await fetchRequest(
       `${API_ENDPOINT}/level/userLevels/${user.id}`,
       "GET"
-    );*/  
+    );  
       const userSets = await fetchRequest(
             `${API_ENDPOINT}/set/userSets/${user.id}`,
             "GET"
@@ -797,6 +797,7 @@ export default async function loadProfile() {
       totalStars: totalStars,
       officialLevelCompleted: officialLevelCompleted,
     }
+
     $('#levelSelect').select2({placeholder:"Filter by tags",allowClear:true});
     $('#filterButton').on("click",filterSearch);
 
@@ -805,13 +806,13 @@ export default async function loadProfile() {
     loadLevels(1);
 
 
-    if(userSets.length!=0){
+   /*  if(userSets.length!=0){
       const setDiv = document.getElementById("sets");
       await fillContent(setDiv, userSets, generateSetDiv);
       document.querySelectorAll("a.set").forEach((userSets) => {
         userSets.addEventListener("click", loadSet);
        });
-  }
+    } */
     
     if(userLevels.length!=0){
       const levelDiv = document.getElementById("display");
