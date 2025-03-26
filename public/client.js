@@ -254596,6 +254596,8 @@ const URL_EDITOR = "editor";
 const URL_PROFILE = "profile";
 const URL_COMMUNITY = "community";
 async function setPageHome() {
+    const navBarCollapse = document.querySelector("#official");
+    navBarCollapse.classList.add("active");
     loadHome();
 }
 function getUserNameAndUUID() {
@@ -254624,6 +254626,8 @@ async function setPageSetById(params) {
 async function setPageLevelPlayer(params) {
     const [userName, uuid] = getUserNameAndUUID();
     const idLevel = params.get("id");
+    const navBarCollapse = document.querySelector("#official");
+    navBarCollapse.classList.add("active");
     let urlLevel = `level?id=${idLevel}`;
     let statement = XAPISingleton.screenAccessedStatement(uuid, userName, urlLevel);
     await XAPISingleton.sendStatement(statement);
@@ -254632,6 +254636,8 @@ async function setPageLevelPlayer(params) {
 async function setClassLevelPlayer(params) {
     const [userName, uuid] = getUserNameAndUUID();
     const idLevel = params.get("id");
+    const navBarCollapse = document.querySelector("#manual");
+    navBarCollapse.classList.add("active");
     let urlLevel = `level?id=${idLevel}`;
     let statement = XAPISingleton.screenAccessedStatement(uuid, userName, urlLevel);
     await XAPISingleton.sendStatement(statement);
@@ -254640,6 +254646,8 @@ async function setClassLevelPlayer(params) {
 async function setPageCommunity(params) {
     const [userName, uuid] = getUserNameAndUUID();
     const page = params.get("page");
+    const navBarCollapse = document.querySelector("#community");
+    navBarCollapse.classList.add("active");
     if (page)
         loadCommunity(page);
     else
@@ -254649,6 +254657,8 @@ async function setPageCommunity(params) {
 }
 async function setPageLevelEditor(levelId) {
     const [userName, uuid] = getUserNameAndUUID();
+    const navBarCollapse = document.querySelector("#editor");
+    navBarCollapse.classList.add("active");
     loadLevelEditor();
     let statement = XAPISingleton.screenAccessedStatement(uuid, userName, URL_EDITOR);
     await XAPISingleton.sendStatement(statement);
@@ -254661,6 +254671,8 @@ async function setPageClass(params) {
     if (cookie != null) {
         role = cookie.role;
     }
+    const navBarCollapse = document.querySelector("#manual");
+    navBarCollapse.classList.add("active");
     const page = params.get("page");
     if (page)
         if (role == "Profesor") {
@@ -254687,6 +254699,8 @@ async function setPageWaitingRoom(params) {
     if (cookie != null) {
         role = cookie.role;
     }
+    const navBarCollapse = document.querySelector("#manual");
+    navBarCollapse.classList.add("active");
     if (role == "Profesor") {
         loadWaitingRoomProfesor();
     }
@@ -254698,6 +254712,8 @@ async function setPageWaitingRoom(params) {
 }
 async function setPageProfile() {
     const [userName, uuid] = getUserNameAndUUID();
+    const navBarCollapse = document.querySelector("#profile");
+    navBarCollapse.classList.add("active");
     loadProfile();
     let statement = XAPISingleton.screenAccessedStatement(uuid, userName, URL_PROFILE);
     await XAPISingleton.sendStatement(statement);
@@ -254913,7 +254929,7 @@ function appendLoginModal() {
     }
 }
 async function appendCreateSetModal(user) {
-    const itemsPerPage = 6;
+    const itemsPerPage = 8;
     let sdata = { user_id: user.id, page: 1, tags: "" };
     const res = await fetchRequest(`${API_ENDPOINT$3}/level/paginatedUserLevels/${JSON.stringify(sdata)}`, "GET");
     const userLevels = res.rows;
@@ -255248,7 +255264,7 @@ async function loadModalPagination(event) {
     loadModalLevels(page);
 }
 async function loadModalLevels(page) {
-    const itemsPerPage = 6;
+    const itemsPerPage = 8;
     const user = sessionCookieValue();
     const selectData = $('#modalLevelSelect').select2('data');
     const map = selectData.map(i => i.text);

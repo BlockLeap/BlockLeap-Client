@@ -17,6 +17,8 @@ const URL_PROFILE= "profile"
 const URL_COMMUNITY = "community"
 
 export async function setPageHome() {
+  const navBarCollapse = document.querySelector("#official");
+  navBarCollapse.classList.add("active");
   loadHome();
 }
 
@@ -50,6 +52,8 @@ export async function setPageSetById(params: URLSearchParams) {
 export async function setPageLevelPlayer(params: URLSearchParams) {
   const [userName, uuid] = getUserNameAndUUID();
   const idLevel = params.get("id") 
+  const navBarCollapse = document.querySelector("#official");
+  navBarCollapse.classList.add("active");
   let urlLevel = `level?id=${idLevel}`;
   let statement = XAPISingleton.screenAccessedStatement(uuid, userName, urlLevel);
   await XAPISingleton.sendStatement(statement);
@@ -58,7 +62,9 @@ export async function setPageLevelPlayer(params: URLSearchParams) {
 
 export async function setClassLevelPlayer(params: URLSearchParams) {
   const [userName, uuid] = getUserNameAndUUID();
-  const idLevel = params.get("id") 
+  const idLevel = params.get("id")
+  const navBarCollapse = document.querySelector("#manual");
+  navBarCollapse.classList.add("active");
   let urlLevel = `level?id=${idLevel}`;
   let statement = XAPISingleton.screenAccessedStatement(uuid, userName, urlLevel);
   await XAPISingleton.sendStatement(statement);
@@ -68,6 +74,9 @@ export async function setClassLevelPlayer(params: URLSearchParams) {
 export async function setPageCommunity(params: URLSearchParams) {
   const [userName, uuid] = getUserNameAndUUID();
   const page = params.get("page");
+  const navBarCollapse = document.querySelector("#community");
+  navBarCollapse.classList.add("active");
+
   if(page)
     loadCommunity(page);
   else loadCommunity();
@@ -76,6 +85,8 @@ export async function setPageCommunity(params: URLSearchParams) {
 }
 export async function setPageLevelEditor(levelId?: number) {
   const [userName, uuid] = getUserNameAndUUID();
+  const navBarCollapse = document.querySelector("#editor");
+  navBarCollapse.classList.add("active");
   loadLevelEditor();
   let statement = XAPISingleton.screenAccessedStatement(uuid, userName, URL_EDITOR);
   await XAPISingleton.sendStatement(statement);
@@ -89,6 +100,8 @@ export async function setPageClass(params: URLSearchParams) {
   if(cookie!=null){
     role = cookie.role;
   }
+  const navBarCollapse = document.querySelector("#manual");
+  navBarCollapse.classList.add("active");
 
   const page = params.get("page");
   if(page)
@@ -117,7 +130,10 @@ export async function setPageWaitingRoom(params: URLSearchParams) {
   let role = "";
   if(cookie!=null){
     role = cookie.role;
+    
   }
+  const navBarCollapse = document.querySelector("#manual");
+  navBarCollapse.classList.add("active");
  
   if(role=="Profesor"){
      loadWaitingRoomProfesor();
@@ -131,6 +147,8 @@ export async function setPageWaitingRoom(params: URLSearchParams) {
 
 export async function setPageProfile() {
   const [userName, uuid] = getUserNameAndUUID();
+  const navBarCollapse = document.querySelector("#profile");
+  navBarCollapse.classList.add("active");
   loadProfile();
   let statement = XAPISingleton.screenAccessedStatement(uuid, userName, URL_PROFILE);
   await XAPISingleton.sendStatement(statement);

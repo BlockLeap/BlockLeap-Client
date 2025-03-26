@@ -10,6 +10,8 @@ import registerModals from './SPA/modals';
 import router from './SPA/router';
 import XAPISingleton from './xAPI/xapi';
 import TourController from './SPA/webtour/TourController';
+import { FlyoutMetricsManager } from 'blockly';
+
 
 export async function route() {
   // Always destroy phaser game
