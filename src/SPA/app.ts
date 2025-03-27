@@ -6,6 +6,7 @@ import { loadWaitingRoomProfesor } from "./loaders/waitingRoomLoader";
 import playLevelById from "./loaders/levelPlayerLoader";
 import { playClassLevelById } from "./loaders/levelPlayerLoader";
 import loadCommunity from "./loaders/communityLoader";
+import loadTutorials from "./loaders/tutorialsLoader";
 import loadSetById from "./loaders/setLoader";
 import loadProfile, { sessionCookieValue } from "./loaders/profileLoader";
 import XAPISingleton from "../xAPI/xapi";
@@ -15,6 +16,7 @@ import {loadClassProfesor} from "./loaders/classLoader";
 const URL_EDITOR = "editor" 
 const URL_PROFILE= "profile"
 const URL_COMMUNITY = "community"
+const URL_TUTORIALS = "tutorials"
 
 export async function setPageHome() {
   const navBarCollapse = document.querySelector("#official");
@@ -91,6 +93,16 @@ export async function setPageLevelEditor(levelId?: number) {
   let statement = XAPISingleton.screenAccessedStatement(uuid, userName, URL_EDITOR);
   await XAPISingleton.sendStatement(statement);
 }
+
+export async function setPageTutorials(params: URLSearchParams) {
+  const [userName, uuid] = getUserNameAndUUID();
+  const navBarCollapse = document.querySelector("#tutorials");
+  navBarCollapse.classList.add("active");
+  loadTutorials();
+  let statement = XAPISingleton.screenAccessedStatement(uuid, userName, URL_TUTORIALS);
+  await XAPISingleton.sendStatement(statement);
+}
+
 
 export async function setPageClass(params: URLSearchParams) {
   const cookie = sessionCookieValue();
