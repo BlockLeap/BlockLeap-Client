@@ -405,7 +405,6 @@ export default async function loadSetById(id: string) {
       const textElement = document.getElementById("display");
       await fillContent(textElement, messages, generateMSG);
     }
-
     
     // Add getLevel event listener
     document.querySelectorAll("a.getLevel").forEach((level) => {
