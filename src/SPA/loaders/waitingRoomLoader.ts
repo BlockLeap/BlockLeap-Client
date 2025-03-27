@@ -79,19 +79,23 @@ export function appendCreateGroupModal() {
       <div class="modal-dialog">
           <div class="modal-content">
               <div class="modal-header bg-primary text-white">
-                  <h5 class="modal-title" id="createGroupLabel">Crear  a una clase</h5>
+                  <h5 class="modal-title" id="createGroupLabel">Create a new class</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
                   <form>
                       <div class="mb-3">
-                          <label for="group" class="form-label">Clase</label>
+                          <label for="group" class="form-label">Class</label>
                           <input type="text" class="form-control" id="group" required>
+                      </div>
+                      <div class="mb-3">
+                          <label for="group" class="form-label">Description</label>
+                          <input type="text" class="form-control" id="description" required>
                       </div>
                   </form>
               </div>
               <div class="modal-footer">
-                  <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="createReq">Crear</button>
+                  <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="createReq">Create</button>
                   <span id="text-error-joinGroup"></span>
               </div>
           </div>
@@ -144,11 +148,14 @@ createGroup.innerHTML = createGroupHtml;
 async function createRegister(modal : bootstrap.Modal):Promise<any> {
   const groupName = (document.getElementById("group") as HTMLInputElement)
     .value;
+    const description = (document.getElementById("description") as HTMLInputElement)
+    .value;
   const cookie = sessionCookieValue();
   const userId= cookie.id;
   ;
   const postData = {
     groupName: groupName,
+    description:description,
     userId:userId
   };
   try{
@@ -172,19 +179,19 @@ export function appendJoinGroupModal() {
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="joinGroupLabel">Unirse a una clase</h5>
+                        <h5 class="modal-title" id="joinGroupLabel">Join a new class</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form>
                             <div class="mb-3">
-                                <label for="group" class="form-label">Clase</label>
+                                <label for="group" class="form-label">Enter code</label>
                                 <input type="text" class="form-control" id="group" required>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="joinReq">Unirse</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="joinReq">Join</button>
                         <span id="text-error-joinGroup"></span>
                     </div>
                 </div>

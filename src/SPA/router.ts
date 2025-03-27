@@ -9,6 +9,8 @@ import {
   setPageHome,
   setClassLevelPlayer,
   setPageSetById,
+  setPageTutorials,
+  
 } from "./app";
 
 const router = {
@@ -21,6 +23,7 @@ const router = {
   "/level": setPageLevelPlayer,
   "/editor": setPageLevelEditor,
   "/profile": setPageProfile,
+  "/tutorials": setPageTutorials,
   "/offline": () => {},
   "/": setPageHome,
 };

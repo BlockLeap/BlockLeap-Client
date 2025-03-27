@@ -276996,7 +276996,7 @@ const API_ENDPOINT$9 = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.A
  *
  * @returns String of HTMLDivElement for showing levels/categories
  */
-function getRowHTML$6() {
+function getRowHTML$a() {
     return '<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>';
 }
 /**
@@ -277088,7 +277088,7 @@ async function playLevel$4(event) {
     route();
 }
 async function loadCategoryById(id) {
-    document.getElementById("content").innerHTML = getRowHTML$6();
+    document.getElementById("content").innerHTML = getRowHTML$a();
     const divElement = document.getElementById("categories");
     // Load placeholders
     await fillContent(divElement, new Array(10), generateCategoryLevelsDivPlaceholder$1);
@@ -277133,7 +277133,7 @@ const API_ENDPOINT$8 = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.A
  *
  * @returns String of HTMLDivElement for showing levels/categories
  */
-function getRowHTML$5() {
+function getRowHTML$9() {
     return '<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>';
 }
 /**
@@ -277197,7 +277197,7 @@ async function loadCategoryLevels(event) {
     route();
 }
 async function loadHome() {
-    document.getElementById("content").innerHTML = getRowHTML$5();
+    document.getElementById("content").innerHTML = getRowHTML$9();
     const divElement = document.getElementById("categories");
     // Load placeholders
     await fillContent(divElement, new Array(10), generateCategoryDivPlaceholder);
@@ -277236,7 +277236,7 @@ function getRowHTML2$3() {
           </div>
   `;
 }
-function getRowHTML$4() {
+function getRowHTML$8() {
     return `<h2 class="text-center w-75 mx-auto pt-3" style="color: white;">CLASSES</h2>
           <div class="text-center w-100">
             <button id="create" class="btn btn-success btn-lg w-30">Create new class</button>
@@ -277282,19 +277282,23 @@ function appendCreateGroupModal() {
       <div class="modal-dialog">
           <div class="modal-content">
               <div class="modal-header bg-primary text-white">
-                  <h5 class="modal-title" id="createGroupLabel">Crear  a una clase</h5>
+                  <h5 class="modal-title" id="createGroupLabel">Create a new class</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
                   <form>
                       <div class="mb-3">
-                          <label for="group" class="form-label">Clase</label>
+                          <label for="group" class="form-label">Class</label>
                           <input type="text" class="form-control" id="group" required>
+                      </div>
+                      <div class="mb-3">
+                          <label for="group" class="form-label">Description</label>
+                          <input type="text" class="form-control" id="description" required>
                       </div>
                   </form>
               </div>
               <div class="modal-footer">
-                  <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="createReq">Crear</button>
+                  <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="createReq">Create</button>
                   <span id="text-error-joinGroup"></span>
               </div>
           </div>
@@ -277337,10 +277341,13 @@ function appendCreateGroupModal() {
 async function createRegister(modal) {
     const groupName = document.getElementById("group")
         .value;
+    const description = document.getElementById("description")
+        .value;
     const cookie = sessionCookieValue();
     const userId = cookie.id;
     const postData = {
         groupName: groupName,
+        description: description,
         userId: userId
     };
     try {
@@ -277358,19 +277365,19 @@ function appendJoinGroupModal$1() {
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="joinGroupLabel">Unirse a una clase</h5>
+                        <h5 class="modal-title" id="joinGroupLabel">Join a new class</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form>
                             <div class="mb-3">
-                                <label for="group" class="form-label">Clase</label>
+                                <label for="group" class="form-label">Enter code</label>
                                 <input type="text" class="form-control" id="group" required>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="joinReq">Unirse</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="joinReq">Join</button>
                         <span id="text-error-joinGroup"></span>
                     </div>
                 </div>
@@ -277430,7 +277437,7 @@ async function useRegister$2(modal) {
     }
 }
 async function loadWaitingRoomProfesor() {
-    document.getElementById("content").innerHTML = getRowHTML$4();
+    document.getElementById("content").innerHTML = getRowHTML$8();
     const textElement = document.getElementById("display");
     try {
         const cookie = sessionCookieValue();
@@ -277542,7 +277549,7 @@ const itemsPerPage$1 = 6;
  *
  * @returns String of HTMLDivElement for showing levels/categories
  */
-function getRowHTML$3() {
+function getRowHTML$7() {
     return `<div class="container">
             <div id="selectDiv" class="mt-3 p-1">
               <select id="levelSelect" name="tags[]" multiple="multiple" style="width: 100%">
@@ -277718,7 +277725,7 @@ async function playLevel$3(event) {
     route();
 }
 async function loadCommunity(page = '1') {
-    document.getElementById("content").innerHTML = getRowHTML$3();
+    document.getElementById("content").innerHTML = getRowHTML$7();
     const divElement = document.getElementById("categories");
     // Load placeholders
     await fillContent(divElement, new Array(10), generateCommunityDivPlaceholder$1);
@@ -277726,6 +277733,143 @@ async function loadCommunity(page = '1') {
     $('#filterButton').on("click", filterSearch$1);
     try {
         loadLevels$2(page);
+    }
+    catch (error) {
+        if (error.status === 503) { // Offline mode
+            console.log("Received a 503 web error");
+            window.location.reload();
+        }
+    }
+}
+
+/**
+ *
+ * @returns String of HTMLDivElement for showing levels/categories
+ */
+function getRowHTML$6() {
+    return `
+        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Getting started</h1>
+       
+    `;
+}
+async function GettingStarted() {
+    document.getElementById("content").innerHTML = getRowHTML$6();
+    document.getElementById("categories");
+}
+
+/**
+ *
+ * @returns String of HTMLDivElement for showing levels/categories
+ */
+function getRowHTML$5() {
+    return `
+        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Create Levels</h1>
+       
+    `;
+}
+async function CreateLevelsLoader() {
+    document.getElementById("content").innerHTML = getRowHTML$5();
+    document.getElementById("categories");
+}
+
+/**
+ *
+ * @returns String of HTMLDivElement for showing levels/categories
+ */
+function getRowHTML$4() {
+    return `
+        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">How to play</h1>
+       
+    `;
+}
+async function HowtoPlay() {
+    document.getElementById("content").innerHTML = getRowHTML$4();
+    document.getElementById("categories");
+}
+
+/**
+ *
+ * @returns String of HTMLDivElement for showing levels/categories
+ */
+function getRowHTML$3() {
+    return `
+  <h1 class="text-center w-75 mx-auto pt-3 mb-4" style="color: white; padding-bottom: 30px;">Tutorials</h1>
+
+
+        <div class="container">
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                <div class="col">
+                    <div class="card h-100 gettingStarted" id="gettingStarted">
+                        <div class="card-body text-center">
+                            <i class="bi bi-book h1"></i>
+                            <h5 class="card-title">Getting Started</h5>
+                            <p class="card-text">Learn how to use the web</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 tutorial-card" id="createLevels">
+                        <div class="card-body text-center">
+                            <i class="bi bi-laptop h1"></i>
+                            <h5 class="card-title">Create Levels Tutorial</h5>
+                            <p class="card-text">Learn how to create levels.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 tutorial-card" id="howToPlay">
+                        <div class="card-body text-center">
+                            <i class="bi bi-play-circle h1"></i>
+                            <h5 class="card-title">How to Play</h5>
+                            <p class="card-text">Learn how to play BlockLeap</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 gettingStarted" id="Classrooms">
+                        <div class="card-body text-center">
+                            <i class="bi bi-book h1"></i>
+                            <h5 class="card-title">Classrooms</h5>
+                            <p class="card-text">Learn how to use see classrooms</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <div class="card h-100 gettingStarted" id="gettingStarted">
+                        <div class="card-body text-center">
+                            <i class="bi bi-book h1"></i>
+                            <h5 class="card-title">Getting Started</h5>
+                            <p class="card-text">Learn how to use the web</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 gettingStarted" id="gettingStarted">
+                        <div class="card-body text-center">
+                            <i class="bi bi-book h1"></i>
+                            <h5 class="card-title">Getting Started</h5>
+                            <p class="card-text">Learn how to use the web</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+async function loadTutorials() {
+    document.getElementById("content").innerHTML = getRowHTML$3();
+    document.getElementById("categories");
+    try {
+        document.getElementById("createLevels")?.addEventListener("click", (e) => {
+            CreateLevelsLoader();
+        });
+        document.getElementById("gettingStarted")?.addEventListener("click", (e) => {
+            GettingStarted();
+        });
+        document.getElementById("howToPlay")?.addEventListener("click", (e) => {
+            HowtoPlay();
+        });
     }
     catch (error) {
         if (error.status === 503) { // Offline mode
@@ -279094,6 +279238,7 @@ async function loadClass(id, page = '1') {
 const URL_EDITOR = "editor";
 const URL_PROFILE = "profile";
 const URL_COMMUNITY = "community";
+const URL_TUTORIALS = "tutorials";
 async function setPageHome() {
     const navBarCollapse = document.querySelector("#official");
     navBarCollapse.classList.add("active");
@@ -279162,6 +279307,14 @@ async function setPageLevelEditor(levelId) {
     navBarCollapse.classList.add("active");
     loadLevelEditor();
     let statement = XAPISingleton.screenAccessedStatement(uuid, userName, URL_EDITOR);
+    await XAPISingleton.sendStatement(statement);
+}
+async function setPageTutorials(params) {
+    const [userName, uuid] = getUserNameAndUUID();
+    const navBarCollapse = document.querySelector("#tutorials");
+    navBarCollapse.classList.add("active");
+    loadTutorials();
+    let statement = XAPISingleton.screenAccessedStatement(uuid, userName, URL_TUTORIALS);
     await XAPISingleton.sendStatement(statement);
 }
 async function setPageClass(params) {
@@ -284014,6 +284167,7 @@ const router = {
     "/level": setPageLevelPlayer,
     "/editor": setPageLevelEditor,
     "/profile": setPageProfile,
+    "/tutorials": setPageTutorials,
     "/offline": () => { },
     "/": setPageHome,
 };
@@ -284062,6 +284216,10 @@ function setNavbarListeners() {
     // Community Levels
     document.getElementById("community").addEventListener("click", (e) => {
         routeIfNewPath("/community", e);
+    });
+    // Community Levels
+    document.getElementById("tutorials").addEventListener("click", (e) => {
+        routeIfNewPath("/tutorials", e);
     });
     // Profile
     document.getElementById("profile").addEventListener("click", (e) => {

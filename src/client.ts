@@ -65,6 +65,10 @@ function setNavbarListeners() {
   document.getElementById("community").addEventListener("click", (e: MouseEvent) =>{ 
     routeIfNewPath("/community", e)}
   );
+    // Community Levels
+    document.getElementById("tutorials").addEventListener("click", (e: MouseEvent) =>{ 
+      routeIfNewPath("/tutorials", e)}
+    );
 
   // Profile
   document.getElementById("profile").addEventListener("click", (e: MouseEvent) => {
