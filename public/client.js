@@ -277760,7 +277760,7 @@ function getRowHTML$5() {
        
     `;
 }
-async function CreateLevelesLoader() {
+async function CreateLevelsLoader() {
     document.getElementById("content").innerHTML = getRowHTML$5();
     document.getElementById("categories");
 }
@@ -277786,7 +277786,9 @@ async function HowtoPlay() {
  */
 function getRowHTML$3() {
     return `
-        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Tutorials</h1>
+  <h1 class="text-center w-75 mx-auto pt-3 mb-4" style="color: white; padding-bottom: 30px;">Tutorials</h1>
+
+
         <div class="container">
             <div class="row row-cols-1 row-cols-md-3 g-4">
                 <div class="col">
@@ -277810,9 +277812,37 @@ function getRowHTML$3() {
                 <div class="col">
                     <div class="card h-100 tutorial-card" id="howToPlay">
                         <div class="card-body text-center">
-                            <i class="bi bi-code-square h1"></i>
+                            <i class="bi bi-play-circle h1"></i>
                             <h5 class="card-title">How to Play</h5>
                             <p class="card-text">Learn how to play BlockLeap</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 gettingStarted" id="Classrooms">
+                        <div class="card-body text-center">
+                            <i class="bi bi-book h1"></i>
+                            <h5 class="card-title">Classrooms</h5>
+                            <p class="card-text">Learn how to use see classrooms</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <div class="card h-100 gettingStarted" id="gettingStarted">
+                        <div class="card-body text-center">
+                            <i class="bi bi-book h1"></i>
+                            <h5 class="card-title">Getting Started</h5>
+                            <p class="card-text">Learn how to use the web</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 gettingStarted" id="gettingStarted">
+                        <div class="card-body text-center">
+                            <i class="bi bi-book h1"></i>
+                            <h5 class="card-title">Getting Started</h5>
+                            <p class="card-text">Learn how to use the web</p>
                         </div>
                     </div>
                 </div>
@@ -277825,7 +277855,7 @@ async function loadTutorials() {
     document.getElementById("categories");
     try {
         document.getElementById("createLevels")?.addEventListener("click", (e) => {
-            CreateLevelesLoader();
+            CreateLevelsLoader();
         });
         document.getElementById("gettingStarted")?.addEventListener("click", (e) => {
             GettingStarted();

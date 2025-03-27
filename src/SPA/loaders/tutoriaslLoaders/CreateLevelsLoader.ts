@@ -16,7 +16,7 @@ function getRowHTML() {
 }
 
 
-export default async function CreateLevelesLoader() {
+export default async function CreateLevelsLoader() {
   document.getElementById("content").innerHTML = getRowHTML();
   const divElement = document.getElementById("categories");
 
