@@ -255875,27 +255875,6 @@ class LevelPlayer extends phaserExports.Scene {
                 if (object !== null) {
                     console.log(JSON.stringify(this.levelJSON));
                     this.getAppendCreateLevelModal(object.id, true);
-                    if (window.confirm("Save Level?")) {
-                        // Preguntar al usuario el nombre del nivel
-                        const levelName = window.prompt("Ingrese un nombre para el nivel:", "Nombre");
-                        const levelDescription = window.prompt("Ingrese una descripción para el nivel:", "");
-                        const levelData = {
-                            user: object.id,
-                            category: null,
-                            self: null,
-                            title: levelName,
-                            data: JSON.stringify(this.levelJSON),
-                            minBlocks: this.levelJSON.MinBlocksUsed,
-                            description: levelDescription,
-                        };
-                        try {
-                            await fetchRequest(`${API_ENDPOINT$2}/level/create`, "POST", JSON.stringify(levelData));
-                            alert(`Nivel ${levelName} creado exitosamente.`);
-                        }
-                        catch (error) {
-                            alert("Connection to server failed");
-                        }
-                    }
                 }
                 else
                     alert("You need to sign in before saving a level");
