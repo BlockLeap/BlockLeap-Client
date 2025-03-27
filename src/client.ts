@@ -20,6 +20,8 @@ export async function route() {
 
   const url = new URL(window.location.href);
   const setPageFunction = router[url.pathname];
+  document.querySelector("#navbarCollapse .nav-link.active")?.classList.remove("active");
+
 
   console.log(url.pathname);
   if (setPageFunction) {
