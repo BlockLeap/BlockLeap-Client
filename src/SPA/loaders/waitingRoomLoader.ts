@@ -79,11 +79,7 @@ export function appendCreateGroupModal() {
       <div class="modal-dialog">
           <div class="modal-content">
               <div class="modal-header bg-primary text-white">
-<<<<<<< HEAD
                   <h5 class="modal-title" id="createGroupLabel">Create a new class</h5>
-=======
-                  <h5 class="modal-title" id="createGroupLabel">Crear a una clase</h5>
->>>>>>> English-Version
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
@@ -221,7 +217,7 @@ export function appendJoinGroupModal() {
       await useRegister(joinGroupModalInstance);
 
       const successMessage = document.createElement("div");
-      successMessage.textContent = "Te has unido a la clase correctamente!";
+      successMessage.textContent = "You have successfully joined the class!";
       successMessage.style.position = "fixed";
       successMessage.style.top = "20px";
       successMessage.style.left = "50%";
@@ -320,15 +316,29 @@ export async function loadWaitingRoomProfesor() {
     });
 
       } else {
-          var messages = [{ msg: "No perteneces a ninguna clase", desc: "Únete a una clase para acceder", buttonName: "", buttonMsg: "" }];
+        var messages = [
+          {
+            msg: "You do not belong to any class",
+            desc: "Join a class to access",
+            buttonName: "",
+            buttonMsg: ""
+          }
+        ];
           await fillContent(textElement, messages, generateMSG);
           document.getElementById("join").addEventListener("click", () => {
               appendJoinGroupModal();
           });
       }
     } else {
-      var messages = [{ msg: "No hay sesión iniciada", desc: "Inicia sesión para acceder a tus clases", buttonName: "altLogin", buttonMsg: "Iniciar Sesión" }];
-      await fillContent(textElement, messages, generateMSG);
+      var messages = [
+        {
+          msg: "No session started",
+          desc: "Log in to access your classes",
+          buttonName: "altLogin",
+          buttonMsg: "Log In"
+        }
+      ];
+            await fillContent(textElement, messages, generateMSG);
       document.getElementById("altLogin").addEventListener("click", () => {
         appendLoginModal();
       });
