@@ -298,7 +298,7 @@ async function countLevel(setId){
 }
 
 async function appendCreateSetModal(user) {
-  const itemsPerPage=6;
+  const itemsPerPage=8;
   let sdata={user_id:user.id,page:1,tags:""};
   const res = await fetchRequest(
     `${API_ENDPOINT}/level/paginatedUserLevels/${JSON.stringify(sdata)}`,
@@ -688,7 +688,7 @@ async function loadModalPagination(event) {
   loadModalLevels(page);
 }
 async function loadModalLevels(page){
-  const itemsPerPage=6;
+  const itemsPerPage=8;
   const user = sessionCookieValue();
   const selectData=$('#modalLevelSelect').select2('data');
   const map=selectData.map(i=>i.text);
