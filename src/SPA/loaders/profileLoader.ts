@@ -21,14 +21,14 @@ let registerSubmitBtnAdded = false;
 function getRowHTML(user) {
   const createSetButton = user.role === 'Profesor' ? `
   <div class="text-center w-100">
-   <button id="createSetBtn" class="btn btn-success btn-lg w-30">Crear Set de Niveles</button>
+<button id="createSetBtn" class="btn btn-success btn-lg w-30">Create Level Set</button>
    </div>
 ` : '';
   return `<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
-           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">TUS SETS</h2>
+           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">YOUR SETS</h2>
             ${createSetButton}
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="sets"></div>
-           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">TUS NIVELES</h2>
+           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">YOUR LEVELS</h2>
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
           <div class="container mb-3">
             <div id="selectDiv" class="mt-3 p-1">
@@ -55,7 +55,7 @@ function getRowHTML(user) {
 
 function getRowHTML2() {
   return `<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
-          <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">TUS NIVELES</h2>
+          <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">YOUR LEVELS</h2>
            <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="levels"></div>
            <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2 w-75 mx-auto" id="display"></div>
   `;
@@ -113,7 +113,7 @@ async function userLogin(modal : bootstrap.Modal) {
   } catch (error) {
       if (error.status === 401 || error.status === 404) {
         const errorElement = document.getElementById("text-error-login");
-        errorElement.innerText = "Error con el username o contraseña";
+        errorElement.innerText = "Error with the username or password";
         errorElement.style.color = "red";
       }
       else if (error.status === 503) { // Offline mode
@@ -131,7 +131,7 @@ async function useRegister(modal : bootstrap.Modal):Promise<any> {
     .value;
   if (userName.length < 3) {
     const errorElement = document.getElementById("text-error-register");
-    errorElement.innerText = "El nombre de usuario debe tener al menos 3 letras";
+    errorElement.innerText = "The username must be at least 3 characters long";
     errorElement.style.color = "red";
     return; 
   }
@@ -142,14 +142,14 @@ async function useRegister(modal : bootstrap.Modal):Promise<any> {
 
   if (!PASSWORD_REGEX.test(userPassword)) {
     const errorElement = document.getElementById("text-error-register");
-    errorElement.innerText = "La contraseña debe contener al menos 1 mayúscula, 1 número y tener más de 5 letras";
+    errorElement.innerText = "The password must contain at least 1 uppercase letter, 1 number, and be longer than 5 characters";
     errorElement.style.color = "red";
     return; 
   }
   const confirmPassword = (document.getElementById("confirmPassword") as HTMLInputElement).value;
   if (userPassword !== confirmPassword) {
     const errorElement = document.getElementById("text-error-register");
-    errorElement.innerText = "Las contraseñas no coinciden";
+    errorElement.innerText = "The passwords do not match";
     errorElement.style.color = "red";
     return; 
   }
@@ -165,12 +165,12 @@ async function useRegister(modal : bootstrap.Modal):Promise<any> {
       JSON.stringify(postData)
     );
     modal.hide();
-    alert("Registro correcto, inicia sesión")
+    alert("Registration successful, please log in");
   }
   catch(error) {
     if (error.status === 409) {
       const errorElement = document.getElementById("text-error-register");
-      errorElement.innerText = "El username ya existe";
+      errorElement.innerText = "The username already exists";
       errorElement.style.color = "red";
     }
     else if (error.status === 503) { // Offline mode
@@ -189,7 +189,7 @@ export function appendLoginModal() {
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="loginModalLabel">Inicio de Sesión</h5>
+                        <h5 class="modal-title" id="loginModalLabel">Login</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -199,14 +199,14 @@ export function appendLoginModal() {
                                 <input type="text" class="form-control" id="username" required>
                             </div>
                             <div class="mb-3">
-                                <label for="password" class="form-label">Contraseña</label>
+                                <label for="password" class="form-label">Password</label>
                                 <input type="password" class="form-control" id="password" required>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="loginReq">Iniciar Sesión</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" id="registerBtn">¿No tienes cuenta?</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="loginReq">Login</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" id="registerBtn">Don't have an account?</button>
                         <span id="text-error-login"></span>
                     </div>
                 </div>
@@ -252,9 +252,9 @@ function appendSetsTable(userSets) {
     <table id="setsTable" class="display" style="width:100%">
       <thead>
         <tr>
-          <th>Nombre</th>
-          <th>Descripción</th>
-          <th>Número de Niveles</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Number of levels</th>
         </tr>
       </thead>
       <tbody>
@@ -313,21 +313,21 @@ async function appendCreateSetModal(user) {
       <div class="modal-dialog">
           <div class="modal-content">
               <div class="modal-header bg-primary text-white">
-                  <h5 class="modal-title" id="createSetModalLabel">Crear Set de Niveles</h5>
+                  <h5 class="modal-title" id="createSetModalLabel">Create Level Set</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
                   <form id="createSetForm">
                       <div class="mb-3">
-                          <label for="setName" class="form-label">Nombre del Set</label>
+                          <label for="setName" class="form-label">Name of the Set</label>
                           <input type="text" class="form-control" id="setName" required>
                       </div>
                      <div>
-                          <label for="setDescription" class="form-label">Descripción</label>
+                          <label for="setDescription" class="form-label">Descriptionn</label>
                           <textarea class="form-control" id="setDescription" rows="3" required></textarea>
                       </div>
                       <div class="mb-3">
-                          <label for="setLevels" class="form-label">Añadir Niveles</label>
+                          <label for="setLevels" class="form-label">Add levels</label>
                           <div class="mt-3 px-2">
                             <select id="modalLevelSelect" name="tags[]" multiple="multiple" style="width: 75%">
                               <option value="LP">Loops</option>
@@ -360,8 +360,8 @@ async function appendCreateSetModal(user) {
                   </div>
               </div>
               <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                  <button type="submit" class="btn btn-primary" id="saveSetBtn">Guardar Set</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-primary" id="saveSetBtn">Save Set</button>
               </div>
           </div>
       </div>
@@ -399,8 +399,8 @@ async function appendCreateSetModal(user) {
                                   .map((checkbox: HTMLInputElement) => checkbox.value);
 
       if (setName === "" || setDescription === "") {
-          alert("Por favor, completa todos los campos.");
-          return;
+        alert("Please, fill in all the fields.");
+        return;
       }
 
       let postData = {
@@ -420,7 +420,7 @@ async function appendCreateSetModal(user) {
           
   // Crear un mensaje de "Cambios Guardados"
   const successMessage = document.createElement("div");
-  successMessage.textContent = "Cambios guardados correctamente!";
+  successMessage.textContent = "Changes saved successfully.!";
   successMessage.style.position = "fixed";
   successMessage.style.top = "20px";
   successMessage.style.left = "50%";
@@ -440,8 +440,9 @@ async function appendCreateSetModal(user) {
   successMessage.remove();
   }, 3000);
       } catch (error) {
-          console.error('Error al crear el set de niveles:', error);
-          alert("Hubo un error al crear el set de niveles.");
+        console.error('Error creating the level set:', error);
+        alert("There was an error creating the level set.");
+        
       }
   });
 }
@@ -452,29 +453,29 @@ function appendRegisterModal() {
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title" id="registerModalLabel">Registro de Cuenta</h5>
+                        <h5 class="modal-title" id="registerModalLabel">Account Registration</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p class = "text-success" >Nombre con más de 3 letras. La contraseña debe contener al menos 1 mayúscula, 1 número y tener más de 5 letras </p>
+                      <p class="text-success">Username must contain more than 3 characters. The password must contain at least 1 uppercase letter, 1 number, and be longer than 5 characters.</p>
                         <form id="registerForm">
                             <div class="mb-3">
-                                <label for="userName" class="form-label">Nombre</label>
+                                <label for="userName" class="form-label">Name</label>
                                 <input type="text" class="form-control" id="userName" required>
                             </div>
                             <div class="mb-3">
-                                <label for="userPassword" class="form-label">Contraseña</label>
+                                <label for="userPassword" class="form-label">Password</label>
                                 <input type="password" class="form-control" id="userPassword" required>
                             </div>
                             <div class="mb-3">
-                                <label for="confirmPassword" class="form-label">Confirmar Contraseña</label>
+                                <label for="confirmPassword" class="form-label">Repeat password</label>
                                 <input type="password" class="form-control" id="confirmPassword" required>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary" id="registerSubmitBtn">Registrarse</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="registerSubmitBtn">Register</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <span id="text-error-register"></span>
                     </div>
                 </div>
@@ -529,19 +530,19 @@ async function generateProfileDiv(data) {
         <div class="col-12">
           <div class="card mx-auto border-dark d-flex flex-column h-100">
             <h5 class="card-header card-title text-dark">
-              Tus Datos
+              Your Data
             </h5>
             <div class="card-body text-dark">
               <p> Nombre: ${data.user.name}</p>
               <p> Rol: ${data.user.role}</p>
               <p class="card-subtitle mb-2 text-muted">
-                Niveles Oficiales Completados: ${data.officialLevelCompleted}
+                Official Levels Completed: ${data.officialLevelCompleted}
               </p>
               <p class="card-subtitle mb-2 text-muted">
-                Estrellas totales conseguidas: ${data.totalStars}
+                Total Stars Earned: ${data.totalStars}
               </p>
               <button type="submit" class="btn btn-danger" id="logoutBtn">
-                  Cerrar Sesion
+                Log Out
               </button>
             </div>
           </div>
@@ -821,7 +822,14 @@ export default async function loadProfile() {
         userLevels.addEventListener("click", loadLevel);
        });
   } else{
-      var messages=[{msg:"Aun no has creado ningun nivel",desc:"Crea niveles en el editor para ver tus niveles",buttonName:"",buttonMsg:""}];
+    var messages = [
+      {
+        msg: "You haven't created any levels yet",
+        desc: "Create levels in the editor to see your levels",
+        buttonName: "",
+        buttonMsg: ""
+      }
+    ];
       const textElement = document.getElementById("levels");
       await fillContent(textElement, messages, generateMSG);
   }
