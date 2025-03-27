@@ -40,7 +40,6 @@ function generateCategoryLevelsDivPlaceholder() {
               <div class="card mx-auto border-dark">
                   <div class="row g-0 text-dark">
                       <div class="placeholder bg-secondary col-md-3">
-
                       </div>
                       <div class="col-md-9">
                           <div class="card-body">
@@ -183,28 +182,28 @@ export function AddLevelsMenu(levels, classLevels, setId) {
   // Agregar contenido al menú
   dropdown.innerHTML = `
   <div style="display: flex; justify-content: space-between; align-items: center;">
-    <h4 style="margin: 0; font-size: 16px;">Selecciona Niveles</h4>
+    <h4 style="margin: 0; font-size: 16px;">Select Levels</h4>
     <button id="closeMenuButton" style="border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
       x
     </button>
   </div>
   <hr>
   <div>
-    <h5 style="margin-top: 0;">Niveles Seleccionados</h5>
+    <h5 style="margin-top: 0;">Selected Levels</h5>
     <div style="max-height: 200px; overflow-y: auto;">
       ${selectedOptionsHTML}
     </div>
   </div>
   <hr>
   <div>
-    <h5 style="margin-top: 0;">Niveles No Seleccionados</h5>
+    <h5 style="margin-top: 0;">Non Selected Levels</h5>
     <div style="max-height: 200px; overflow-y: auto;">
       ${unselectedOptionsHTML}
     </div>
   </div>
   <div style="display: flex; justify-content: center; margin-top: 15px;">
     <button id="saveChangesButton" style="padding: 10px 20px; background-color: green; color: white; border: none; border-radius: 5px; cursor: pointer;">
-      Guardar Cambios
+      Save Changes
     </button>
   </div>
 `;
@@ -281,7 +280,7 @@ async function handleSaveLevelChanges(levels, setLevelTitles,setId) {
 
   // Crear un mensaje de "Cambios Guardados"
   const successMessage = document.createElement("div");
-  successMessage.textContent = "Cambios guardados correctamente!";
+  successMessage.textContent = "Changes saved successfully.!";
   successMessage.style.position = "fixed";
   successMessage.style.top = "20px";
   successMessage.style.left = "50%";
@@ -401,7 +400,14 @@ export default async function loadSetById(id: string) {
     await fillContent(divElement, levelsWithStatistics, generateLevelDiv);
 
     } else {
-      var messages=[{msg:"Aun no hay niveles en el set",desc:"Parece que no hay niveles en el set",buttonName:"",buttonMsg:""}];
+      var messages = [
+        {
+          msg: "There are no levels in the set yet",
+          desc: "It looks like there are no levels in the set",
+          buttonName: "",
+          buttonMsg: ""
+        }
+      ];
       const textElement = document.getElementById("display");
       await fillContent(textElement, messages, generateMSG);
     }

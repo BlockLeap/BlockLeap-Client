@@ -79,7 +79,11 @@ export function appendCreateGroupModal() {
       <div class="modal-dialog">
           <div class="modal-content">
               <div class="modal-header bg-primary text-white">
+<<<<<<< HEAD
                   <h5 class="modal-title" id="createGroupLabel">Create a new class</h5>
+=======
+                  <h5 class="modal-title" id="createGroupLabel">Crear a una clase</h5>
+>>>>>>> English-Version
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
