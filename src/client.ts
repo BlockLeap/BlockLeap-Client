@@ -20,6 +20,8 @@ export async function route() {
 
   const url = new URL(window.location.href);
   const setPageFunction = router[url.pathname];
+  document.querySelector("#navbarCollapse .nav-link.active")?.classList.remove("active");
+
 
   console.log(url.pathname);
   if (setPageFunction) {
@@ -49,8 +51,8 @@ function setNavbarListeners() {
     routeIfNewPath("/", e)}
   );
 
-  // TODO: Manual
-  document.getElementById("manual").addEventListener("click", (e: MouseEvent) =>{ 
+  // TODO: Classroom
+  document.getElementById("classroom").addEventListener("click", (e: MouseEvent) =>{ 
     routeIfNewPath("/waiting-room", e)}
   );
 

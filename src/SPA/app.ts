@@ -35,6 +35,8 @@ export function getUserNameAndUUID(): [string,string]{
 export async function setPageOfficalCategoryById(params: URLSearchParams) {
   const [userName, uuid] = getUserNameAndUUID();
   const idCategory = params.get("id") 
+  const navBarCollapse = document.querySelector("#official");
+  navBarCollapse.classList.add("active");
   let urlCategory = `category?id=${idCategory}`;
   loadCategoryById(idCategory);
   let statement = XAPISingleton.screenAccessedStatement(uuid, userName, urlCategory);
@@ -63,7 +65,7 @@ export async function setPageLevelPlayer(params: URLSearchParams) {
 export async function setClassLevelPlayer(params: URLSearchParams) {
   const [userName, uuid] = getUserNameAndUUID();
   const idLevel = params.get("id")
-  const navBarCollapse = document.querySelector("#manual");
+  const navBarCollapse = document.querySelector("#official");
   navBarCollapse.classList.add("active");
   let urlLevel = `level?id=${idLevel}`;
   let statement = XAPISingleton.screenAccessedStatement(uuid, userName, urlLevel);
@@ -100,7 +102,7 @@ export async function setPageClass(params: URLSearchParams) {
   if(cookie!=null){
     role = cookie.role;
   }
-  const navBarCollapse = document.querySelector("#manual");
+  const navBarCollapse = document.querySelector("#classroom");
   navBarCollapse.classList.add("active");
 
   const page = params.get("page");
@@ -132,7 +134,7 @@ export async function setPageWaitingRoom(params: URLSearchParams) {
     role = cookie.role;
     
   }
-  const navBarCollapse = document.querySelector("#manual");
+  const navBarCollapse = document.querySelector("#classroom");
   navBarCollapse.classList.add("active");
  
   if(role=="Profesor"){
