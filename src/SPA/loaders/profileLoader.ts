@@ -533,8 +533,8 @@ async function generateProfileDiv(data) {
               Your Data
             </h5>
             <div class="card-body text-dark">
-              <p> Nombre: ${data.user.name}</p>
-              <p> Rol: ${data.user.role}</p>
+              <p> Name: ${data.user.name}</p>
+              <p> Role: ${data.user.role}</p>
               <p class="card-subtitle mb-2 text-muted">
                 Official Levels Completed: ${data.officialLevelCompleted}
               </p>
