@@ -276996,7 +276996,7 @@ const API_ENDPOINT$9 = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.A
  *
  * @returns String of HTMLDivElement for showing levels/categories
  */
-function getRowHTML$a() {
+function getRowHTML$d() {
     return '<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>';
 }
 /**
@@ -277088,7 +277088,7 @@ async function playLevel$4(event) {
     route();
 }
 async function loadCategoryById(id) {
-    document.getElementById("content").innerHTML = getRowHTML$a();
+    document.getElementById("content").innerHTML = getRowHTML$d();
     const divElement = document.getElementById("categories");
     // Load placeholders
     await fillContent(divElement, new Array(10), generateCategoryLevelsDivPlaceholder$1);
@@ -277133,7 +277133,7 @@ const API_ENDPOINT$8 = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.A
  *
  * @returns String of HTMLDivElement for showing levels/categories
  */
-function getRowHTML$9() {
+function getRowHTML$c() {
     return '<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>';
 }
 /**
@@ -277197,7 +277197,7 @@ async function loadCategoryLevels(event) {
     route();
 }
 async function loadHome() {
-    document.getElementById("content").innerHTML = getRowHTML$9();
+    document.getElementById("content").innerHTML = getRowHTML$c();
     const divElement = document.getElementById("categories");
     // Load placeholders
     await fillContent(divElement, new Array(10), generateCategoryDivPlaceholder);
@@ -277236,7 +277236,7 @@ function getRowHTML2$3() {
           </div>
   `;
 }
-function getRowHTML$8() {
+function getRowHTML$b() {
     return `<h2 class="text-center w-75 mx-auto pt-3" style="color: white;">CLASSES</h2>
           <div class="text-center w-100">
             <button id="create" class="btn btn-success btn-lg w-30">Create new class</button>
@@ -277437,7 +277437,7 @@ async function useRegister$2(modal) {
     }
 }
 async function loadWaitingRoomProfesor() {
-    document.getElementById("content").innerHTML = getRowHTML$8();
+    document.getElementById("content").innerHTML = getRowHTML$b();
     const textElement = document.getElementById("display");
     try {
         const cookie = sessionCookieValue();
@@ -277563,7 +277563,7 @@ const itemsPerPage$1 = 6;
  *
  * @returns String of HTMLDivElement for showing levels/categories
  */
-function getRowHTML$7() {
+function getRowHTML$a() {
     return `<div class="container">
             <div id="selectDiv" class="mt-3 p-1">
               <select id="levelSelect" name="tags[]" multiple="multiple" style="width: 100%">
@@ -277739,7 +277739,7 @@ async function playLevel$3(event) {
     route();
 }
 async function loadCommunity(page = '1') {
-    document.getElementById("content").innerHTML = getRowHTML$7();
+    document.getElementById("content").innerHTML = getRowHTML$a();
     const divElement = document.getElementById("categories");
     // Load placeholders
     await fillContent(divElement, new Array(10), generateCommunityDivPlaceholder$1);
@@ -277760,13 +277760,58 @@ async function loadCommunity(page = '1') {
  *
  * @returns String of HTMLDivElement for showing levels/categories
  */
-function getRowHTML$6() {
+function getRowHTML$9() {
     return `
         <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Getting started</h1>
        
     `;
 }
 async function GettingStarted() {
+    document.getElementById("content").innerHTML = getRowHTML$9();
+    document.getElementById("categories");
+}
+
+/**
+ *
+ * @returns String of HTMLDivElement for showing levels/categories
+ */
+function getRowHTML$8() {
+    return `
+        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Create Levels</h1>
+       
+    `;
+}
+async function CreateLevelsLoader() {
+    document.getElementById("content").innerHTML = getRowHTML$8();
+    document.getElementById("categories");
+}
+
+/**
+ *
+ * @returns String of HTMLDivElement for showing levels/categories
+ */
+function getRowHTML$7() {
+    return `
+        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">How to play</h1>
+       
+    `;
+}
+async function HowtoPlay() {
+    document.getElementById("content").innerHTML = getRowHTML$7();
+    document.getElementById("categories");
+}
+
+/**
+ *
+ * @returns String of HTMLDivElement for showing levels/categories
+ */
+function getRowHTML$6() {
+    return `
+        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Classrooms tutorial</h1>
+       
+    `;
+}
+async function classroomsTutorialLoader() {
     document.getElementById("content").innerHTML = getRowHTML$6();
     document.getElementById("categories");
 }
@@ -277777,11 +277822,11 @@ async function GettingStarted() {
  */
 function getRowHTML$5() {
     return `
-        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Create Levels</h1>
+        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Community tutorial</h1>
        
     `;
 }
-async function CreateLevelsLoader() {
+async function CommunityTutorial() {
     document.getElementById("content").innerHTML = getRowHTML$5();
     document.getElementById("categories");
 }
@@ -277792,11 +277837,11 @@ async function CreateLevelsLoader() {
  */
 function getRowHTML$4() {
     return `
-        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">How to play</h1>
+        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Profile tutorial</h1>
        
     `;
 }
-async function HowtoPlay() {
+async function profileTutorial() {
     document.getElementById("content").innerHTML = getRowHTML$4();
     document.getElementById("categories");
 }
@@ -277813,9 +277858,9 @@ function getRowHTML$3() {
         <div class="container">
             <div class="row row-cols-1 row-cols-md-3 g-4">
                 <div class="col">
-                    <div class="card h-100 gettingStarted" id="gettingStarted">
+                    <div class="card h-100 tutorial-card" id="gettingStarted">
                         <div class="card-body text-center">
-                            <i class="bi bi-book h1"></i>
+                            <i class="bi bi-lightning-fill h1"></i>
                             <h5 class="card-title">Getting Started</h5>
                             <p class="card-text">Learn how to use the web</p>
                         </div>
@@ -277824,7 +277869,7 @@ function getRowHTML$3() {
                 <div class="col">
                     <div class="card h-100 tutorial-card" id="createLevels">
                         <div class="card-body text-center">
-                            <i class="bi bi-laptop h1"></i>
+                            <i class="bi bi-pencil-square h1"></i>
                             <h5 class="card-title">Create Levels Tutorial</h5>
                             <p class="card-text">Learn how to create levels.</p>
                         </div>
@@ -277833,14 +277878,14 @@ function getRowHTML$3() {
                 <div class="col">
                     <div class="card h-100 tutorial-card" id="howToPlay">
                         <div class="card-body text-center">
-                            <i class="bi bi-play-circle h1"></i>
+                            <i class="bi bi-controller h1"></i>
                             <h5 class="card-title">How to Play</h5>
                             <p class="card-text">Learn how to play BlockLeap</p>
                         </div>
                     </div>
                 </div>
                 <div class="col">
-                    <div class="card h-100 gettingStarted" id="Classrooms">
+                    <div class="card h-100 tutorial-card" id="Classrooms">
                         <div class="card-body text-center">
                             <i class="bi bi-book h1"></i>
                             <h5 class="card-title">Classrooms</h5>
@@ -277850,20 +277895,21 @@ function getRowHTML$3() {
                 </div>
 
                 <div class="col">
-                    <div class="card h-100 gettingStarted" id="gettingStarted">
+                    <div class="card h-100 tutorial-card" id="Community">
                         <div class="card-body text-center">
-                            <i class="bi bi-book h1"></i>
-                            <h5 class="card-title">Getting Started</h5>
-                            <p class="card-text">Learn how to use the web</p>
+                            <i class="bi bi-people-fill h1"></i>
+                            <h5 class="card-title">Community</h5>
+                            <p class="card-text">Learn how to use the BlockLeap Community</p>
                         </div>
                     </div>
                 </div>
+
                 <div class="col">
-                    <div class="card h-100 gettingStarted" id="gettingStarted">
+                    <div class="card h-100 tutorial-card" id="Profiletutorial">
                         <div class="card-body text-center">
-                            <i class="bi bi-book h1"></i>
-                            <h5 class="card-title">Getting Started</h5>
-                            <p class="card-text">Learn how to use the web</p>
+                            <i class="bi bi-person-circle h1"></i>
+                            <h5 class="card-title">Your Profile</h5>
+                            <p class="card-text">Learn what you can make in your profile</p>
                         </div>
                     </div>
                 </div>
@@ -277875,14 +277921,23 @@ async function loadTutorials() {
     document.getElementById("content").innerHTML = getRowHTML$3();
     document.getElementById("categories");
     try {
-        document.getElementById("createLevels")?.addEventListener("click", (e) => {
-            CreateLevelsLoader();
-        });
         document.getElementById("gettingStarted")?.addEventListener("click", (e) => {
             GettingStarted();
         });
+        document.getElementById("createLevels")?.addEventListener("click", (e) => {
+            CreateLevelsLoader();
+        });
         document.getElementById("howToPlay")?.addEventListener("click", (e) => {
             HowtoPlay();
+        });
+        document.getElementById("Classrooms")?.addEventListener("click", (e) => {
+            classroomsTutorialLoader();
+        });
+        document.getElementById("Community")?.addEventListener("click", (e) => {
+            CommunityTutorial();
+        });
+        document.getElementById("Profiletutorial")?.addEventListener("click", (e) => {
+            profileTutorial();
         });
     }
     catch (error) {
@@ -279116,14 +279171,17 @@ async function loadClassProfesor(id, page = '1') {
                     var messages = [{ msg: "There are no levels in the class yet.", desc: "It looks like there are no levels in the class. Add levels.", buttonName: "", buttonMsg: "" }];
                     const textElement = document.getElementById("display");
                     await fillContent(textElement, messages, generateMSG$1);
-                    document.getElementById("addSets").addEventListener("click", (e) => {
-                        //AddSetsMenu(userSets,userSets,classId); 
-                    });
                     document.getElementById("addLevels").addEventListener("click", (e) => {
                         AddLevelsMenu(userLevels, levels, classId);
                     });
+                    document.getElementById("addSets").addEventListener("click", (e) => {
+                        AddSetsMenu(userSets, sets, classId, userLevels, cookie.id);
+                    });
                     document.getElementById("seeCode").addEventListener("click", (e) => {
                         appendSeeCodeModal(classCode.code, classId);
+                    });
+                    document.getElementById("students").addEventListener("click", (e) => {
+                        StudentsMenu(studentsNames);
                     });
                 }
             }
