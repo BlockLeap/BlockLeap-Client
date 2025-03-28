@@ -1113,16 +1113,19 @@ export async function loadClassProfesor(id,page='1') {
             var messages=[{msg:"There are no levels in the class yet.",desc:"It looks like there are no levels in the class. Add levels.",buttonName:"",buttonMsg:""}];
             const textElement = document.getElementById("display");
             await fillContent(textElement, messages, generateMSG);
-            document.getElementById("addSets").addEventListener("click", (e: MouseEvent) => {
-              //AddSetsMenu(userSets,userSets,classId); 
-            });
       
             document.getElementById("addLevels").addEventListener("click", (e: MouseEvent) => {
                AddLevelsMenu(userLevels,levels,classId); 
             });
+            document.getElementById("addSets").addEventListener("click", (e: MouseEvent) => {
+              AddSetsMenu(userSets,sets,classId,userLevels,cookie.id); 
+            });
             document.getElementById("seeCode").addEventListener("click", (e: MouseEvent) => {
                appendSeeCodeModal(classCode.code,classId);
             });
+            document.getElementById("students").addEventListener("click", (e: MouseEvent) => {
+              StudentsMenu(studentsNames); 
+          });
         }
       }else{//Sin grupo
         document.getElementById("content").innerHTML = getRowHTML2();
