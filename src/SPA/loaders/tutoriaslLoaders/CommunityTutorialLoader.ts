@@ -11,7 +11,6 @@ const API_ENDPOINT = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.API
 function getRowHTML() {
     return `
         <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Community tutorial</h1>
-       
     `;
 }
 

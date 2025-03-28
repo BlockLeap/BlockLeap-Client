@@ -277823,7 +277823,6 @@ async function classroomsTutorialLoader() {
 function getRowHTML$5() {
     return `
         <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Community tutorial</h1>
-       
     `;
 }
 async function CommunityTutorial() {
