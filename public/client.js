@@ -280119,16 +280119,18 @@ async function loadProfile() {
         const totalStars = await fetchRequest(`${API_ENDPOINT$3}/user/totalStars/${user.id}`, "GET");
         const userLevels = await fetchRequest(`${API_ENDPOINT$3}/level/userLevels/${user.id}`, "GET");
         const userSets = await fetchRequest(`${API_ENDPOINT$3}/set/userSets/${user.id}`, "GET");
-        if (userSets.length !== 0) {
-            await Promise.all(userSets.map(async (set) => {
-                const count = await countLevel(set.id);
-                set.levelCount = count;
-            }));
-            await appendSetsTable(userSets);
-        }
-        else {
-            const setsDiv = document.getElementById("sets");
-            setsDiv.innerHTML = `<p class="text-center text-muted">No tienes sets creados.</p>`;
+        if (user.role == "Profesor") {
+            if (userSets.length !== 0) {
+                await Promise.all(userSets.map(async (set) => {
+                    const count = await countLevel(set.id);
+                    set.levelCount = count;
+                }));
+                await appendSetsTable(userSets);
+            }
+            else {
+                const setsDiv = document.getElementById("sets");
+                setsDiv.innerHTML = `<p class="text-center text-muted">No tienes sets creados.</p>`;
+            }
         }
         // divElement.innerHTML = await generateProfileDiv(user, totalStars, officialLevelCompleted);
         const data = {
