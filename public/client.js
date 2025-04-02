@@ -2829,6 +2829,14 @@ function defineAllBlocks() {
         };
         return JSON.stringify(code);
     });
+    //changeStatus block, changes the status of the specified object
+    javascriptExports.javascriptGenerator.forBlock["switchStatus"] = wrapBlockFunction("switchStatus", function (block, generator) {
+        let code = {
+            blockId: block.id,
+            eventName: "switch_status",
+        };
+        return JSON.stringify(code);
+    });
     //number block:
     javascriptExports.javascriptGenerator.forBlock["math_block"] = wrapBlockFunction("math_block", function (block, generator) {
         // Numeric value.
@@ -3026,6 +3034,15 @@ var action_blocks = [
         "tooltip": "Changes the status of the specified object",
         "helpUrl": ""
     },
+    {
+        "type": "switchStatus",
+        "message0": "Switch trap status",
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": "#745ba5",
+        "tooltip": "Flips the traps status",
+        "helpUrl": ""
+    }
 ];
 
 var loop_blocks = [
@@ -245073,6 +245090,7 @@ class TrapObject extends ArticodingSprite {
         this.scene = scene;
         this.scene.add.existing(this);
         document.addEventListener("change_status", this.changeStatus);
+        document.addEventListener("switch_status", this.switchStatus);
     }
     changeStatus = (e) => {
         const data = e.detail;
@@ -245082,6 +245100,16 @@ class TrapObject extends ArticodingSprite {
             this.disable();
         }
         else if (!this.isOn && turnOn) {
+            // Turn on
+            this.enable();
+        }
+    };
+    switchStatus = (e) => {
+        if (this.isOn) {
+            // Turn off
+            this.disable();
+        }
+        else if (!this.isOn) {
             // Turn on
             this.enable();
         }
@@ -251633,6 +251661,10 @@ var EmptyLevel = {
                         },
                         {
                             "type": "changeStatus",
+                            "kind": "block"
+                        },
+                        {
+                            "type": "switchStatus",
                             "kind": "block"
                         }
                     ]

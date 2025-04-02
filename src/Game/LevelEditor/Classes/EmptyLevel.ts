@@ -38,6 +38,10 @@ export default <Level.Level>{
                            "type":"changeStatus",
                            "kind":"block"
                         }
+                        {
+                            "type":"switchStatus",
+                            "kind":"block"
+                         }
                     ]
                 },
                 {

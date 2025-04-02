@@ -76,6 +76,15 @@ export function defineAllBlocks() {
     return JSON.stringify(code);
   });
 
+  //changeStatus block, changes the status of the specified object
+  javascriptGenerator.forBlock["switchStatus"] = wrapBlockFunction("switchStatus", function (block: Block, generator: any) {
+    let code = {
+      blockId: block.id,
+      eventName: "switch_status",
+    };
+    return JSON.stringify(code);
+  });
+
   //number block:
   javascriptGenerator.forBlock["math_block"] = wrapBlockFunction("math_block", function (block: Block, generator: any): [string, Order] {
     // Numeric value.
