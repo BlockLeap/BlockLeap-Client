@@ -277799,6 +277799,7 @@ function getRowHTML$9() {
     `;
 }
 async function GettingStarted() {
+    history.pushState({}, "", "/tutorials/gettingstarted");
     document.getElementById("content").innerHTML = getRowHTML$9();
     document.getElementById("categories");
 }
@@ -277814,6 +277815,7 @@ function getRowHTML$8() {
     `;
 }
 async function CreateLevelsLoader() {
+    history.pushState({}, "", "/tutorials/createlevel");
     document.getElementById("content").innerHTML = getRowHTML$8();
     document.getElementById("categories");
 }
@@ -277829,6 +277831,7 @@ function getRowHTML$7() {
     `;
 }
 async function HowtoPlay() {
+    history.pushState({}, "", "/tutorials/howtoplay");
     document.getElementById("content").innerHTML = getRowHTML$7();
     document.getElementById("categories");
 }
@@ -277844,6 +277847,7 @@ function getRowHTML$6() {
     `;
 }
 async function classroomsTutorialLoader() {
+    history.pushState({}, "", "/tutorials/classrooms");
     document.getElementById("content").innerHTML = getRowHTML$6();
     document.getElementById("categories");
 }
@@ -277858,6 +277862,7 @@ function getRowHTML$5() {
     `;
 }
 async function CommunityTutorial() {
+    history.pushState({}, "", "/tutorials/community");
     document.getElementById("content").innerHTML = getRowHTML$5();
     document.getElementById("categories");
 }
@@ -277873,6 +277878,7 @@ function getRowHTML$4() {
     `;
 }
 async function profileTutorial() {
+    history.pushState({}, "", "/tutorials/profile");
     document.getElementById("content").innerHTML = getRowHTML$4();
     document.getElementById("categories");
 }

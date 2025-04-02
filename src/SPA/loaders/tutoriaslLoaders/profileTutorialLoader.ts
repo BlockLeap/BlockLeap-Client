@@ -15,8 +15,8 @@ function getRowHTML() {
     `;
 }
 
-
 export default async function profileTutorial() {
+  history.pushState({}, "", "/tutorials/profile");
   document.getElementById("content").innerHTML = getRowHTML();
   const divElement = document.getElementById("categories");
 

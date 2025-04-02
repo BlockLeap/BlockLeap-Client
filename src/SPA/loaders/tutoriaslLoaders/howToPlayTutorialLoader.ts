@@ -17,6 +17,7 @@ function getRowHTML() {
 
 
 export default async function HowtoPlay() {
+  history.pushState({}, "", "/tutorials/howtoplay");
   document.getElementById("content").innerHTML = getRowHTML();
   const divElement = document.getElementById("categories");
 

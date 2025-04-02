@@ -49,6 +49,7 @@ function getRowHTML() {
 
 
 export default async function GettingStarted() {
+  history.pushState({}, "", "/tutorials/gettingstarted");
   document.getElementById("content").innerHTML = getRowHTML();
   const divElement = document.getElementById("categories");
 

@@ -16,6 +16,7 @@ function getRowHTML() {
 
 
 export default async function CommunityTutorial() {
+  history.pushState({}, "", "/tutorials/community");
   document.getElementById("content").innerHTML = getRowHTML();
   const divElement = document.getElementById("categories");
 

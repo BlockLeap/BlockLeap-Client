@@ -17,6 +17,7 @@ function getRowHTML() {
 
 
 export default async function classroomsTutorialLoader() {
+  history.pushState({}, "", "/tutorials/classrooms");
   document.getElementById("content").innerHTML = getRowHTML();
   const divElement = document.getElementById("categories");
 
