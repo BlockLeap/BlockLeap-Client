@@ -200,4 +200,21 @@ export function defineAllBlocks() {
     const varName = block.getFieldValue('VAR');
     return [variables[varName], Order.ATOMIC];
   });
+
+  javascriptGenerator.forBlock["math_change"] = wrapBlockFunction("math_change", function (block: Block, generator: any) {
+    // Variable getter.
+    const argument0 = generator.valueToCode(block, 'DELTA', Order.ASSIGNMENT) || '0';
+    let varName = block.getFieldValue('VAR');
+    let num= Number(variables[varName]);
+    variables[varName] = String(num+ Number(argument0));
+    let code = {
+      blockId: block.id,
+      eventName: "variables_change",
+      data: {
+        varName: varName,
+        value: argument0
+      }
+    };
+    return JSON.stringify(code);
+  });
 }
