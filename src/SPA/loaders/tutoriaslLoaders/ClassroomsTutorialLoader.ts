@@ -11,7 +11,12 @@ const API_ENDPOINT = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.API
 function getRowHTML() {
     return `
         <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Classrooms tutorial</h1>
-       
+       <p class="text-center w-75 mx-auto pt-3" style="color: white;">
+        Once you enter the classroom tab, if you haven't signed in, you will need to do so in order to enjoy the benefits of being part of a class.<br><br>
+        If you are already signed in, you will find a button at the top to join classes using a code. If you don’t have a code, contact your teacher and they will provide it for you.<br><br>
+        Once you’ve joined one or more classes, select the one you want to enter.<br><br>
+        Inside the class, at the top, you’ll find sets of levels that the teacher has created for the entire class. At the bottom, you’ll see individual levels that the teacher has selected as interesting for you to complete.
+      </p>
     `;
 }
 
