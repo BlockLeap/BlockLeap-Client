@@ -35,7 +35,7 @@ function getRowHTML() {
                     <div class="card h-100 tutorial-card" id="createLevels">
                         <div class="card-body text-center">
                             <i class="bi bi-pencil-square h1"></i>
-                            <h5 class="card-title">Create Levels Tutorial</h5>
+                            <h5 class="card-title">Create Levels</h5>
                             <p class="card-text">Learn how to create levels.</p>
                         </div>
                     </div>

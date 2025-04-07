@@ -277763,37 +277763,38 @@ async function loadCommunity(page = '1') {
 function getRowHTML$9() {
     return `
         <div class="container text-center mt-5">
-    <h1 class="text-white">🚀 Getting Started</h1>
-    <p class="text-light mt-3">
-        Empieza a usar nuestra plataforma en pocos pasos. Sigue la guía para configurar todo rápidamente.
-    </p>
+        <h1 class="text-white">🚀 Getting Started</h1>
+        <p class="text-light mt-3">
+            Start using BlockLeap in just a few steps. Follow the guide to set everything up quickly.
+        </p>
     
     <div class="row mt-4">
         <div class="col-md-4">
             <div class="card bg-dark text-white p-3">
                 <i class="bi bi-box-seam display-4"></i>
                 <h4 class="mt-3">Step 1</h4>
-                <p>Regístrate y crea tu cuenta.</p>
+                <p>Sign up and create your account clicking in the profile button in the right corner.</p>
             </div>
         </div>
 
         <div class="col-md-4">
             <div class="card bg-dark text-white p-3">
                 <i class="bi bi-gear display-4"></i>
-                <h4 class="mt-3">Paso 2</h4>
-                <p>Configura tus preferencias.</p>
+                <h4 class="mt-3">Step 2</h4>
+                <p>Start playing with the play button in the menu and explore the official levels</p>
             </div>
         </div>
 
         <div class="col-md-4">
             <div class="card bg-dark text-white p-3">
                 <i class="bi bi-rocket-takeoff display-4"></i>
-                <h4 class="mt-3">Paso 3</h4>
-                <p>Empieza a explorar nuestras funciones.</p>
+                <h4 class="mt-3">Step 3</h4>
+                <p> If you want to play and you dont know how, continue with the next tutorial!</p>
             </div>
         </div>
     </div>
 </div>
+
 
        
     `;
@@ -277811,7 +277812,31 @@ async function GettingStarted() {
 function getRowHTML$8() {
     return `
         <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Create Levels</h1>
-       
+        <h3 class="text-center w-75 mx-auto pt-3" style="color: white;">Create Board</h3>
+        <p class="text-center w-75 mx-auto pt-3" style="color: white;">In the game interface the first thing you will find is the board you have to build where 
+        you have to set the number of rows and columns that your level will have. Once you have set 
+        the rows and columns you will have to paint the board with the basic elements, floor, 
+        walls and corners. On the floor you can add the dynamic elements, such as the character, 
+        the chest, the traps and the ladder. To be able to save the level it is essential that you put 
+        the character and the escape ladder. After that you can press <strong>save!</strong></p>
+
+        <img src="/images/board_example.png" alt="Board Example" class="mx-auto d-block" style="width: 50%; margin-top: 15px;">
+  
+        <h3 class="text-center w-75 mx-auto pt-3" style="color: white;">Level Settings</h3>
+        <p class="text-center w-75 mx-auto pt-3" style="color: white;">    
+        When you click on save you will see the screen where you can configure the level.  
+        In the upper right corner you can configure the blocks that the user can use to pass the level.
+        You can save the level for later or if you pass it with the blocks you can save it and publish it in the 
+        community. You will not be able to publish levels in the community that have not been completed.
+        When you pass the level you will see a screen to save the level with its name, description and you 
+        can add tags to the level and decide whether to publish it in the community or not.
+        </p>
+       <img src="/images/BlockLimits.png" alt="Block Limits" class="d-block" style="width: 20%; margin-top: 15px; float: left;">
+       <img src="/images/SaveLevel.png" alt="Save Level" class="d-block" style="width: 20%; margin-top: 15px; float: center;">
+       <img src="/images/publish.png" alt="Publish Level" class="d-block" style="width: 20%; margin-top: 15px; float: right;">
+
+
+
     `;
 }
 async function CreateLevelsLoader() {
@@ -277907,7 +277932,7 @@ function getRowHTML$3() {
                     <div class="card h-100 tutorial-card" id="createLevels">
                         <div class="card-body text-center">
                             <i class="bi bi-pencil-square h1"></i>
-                            <h5 class="card-title">Create Levels Tutorial</h5>
+                            <h5 class="card-title">Create Levels</h5>
                             <p class="card-text">Learn how to create levels.</p>
                         </div>
                     </div>
