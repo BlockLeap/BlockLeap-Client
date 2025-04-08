@@ -2941,6 +2941,22 @@ function defineAllBlocks() {
         const varName = block.getFieldValue('VAR');
         return [variables[varName], javascriptExports.Order.ATOMIC];
     });
+    javascriptExports.javascriptGenerator.forBlock["math_change"] = wrapBlockFunction("math_change", function (block, generator) {
+        // Variable getter.
+        const argument0 = generator.valueToCode(block, 'DELTA', javascriptExports.Order.ASSIGNMENT) || '0';
+        let varName = block.getFieldValue('VAR');
+        let num = Number(variables[varName]);
+        variables[varName] = String(num + Number(argument0));
+        let code = {
+            blockId: block.id,
+            eventName: "variables_change",
+            data: {
+                varName: varName,
+                value: argument0
+            }
+        };
+        return JSON.stringify(code);
+    });
 }
 
 var action_blocks = [
@@ -277844,8 +277860,10 @@ async function GettingStarted() {
  * @returns String of HTMLDivElement for showing levels/categories
  */
 function getRowHTML$8() {
-    return `
-        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Create Levels</h1>
+    return `        
+      <div class="container bg-body rounded-3 mt-3 p-3">
+        <h1 class="text-center w-75 mx-auto p-3 bg-dark rounded-3" style="color: white;">Create Levels</h1>
+        <div class="container bg-dark rounded-3 mt-3 pb-3">
         <h3 class="text-center w-75 mx-auto pt-3" style="color: white;">Create Board</h3>
         <p class="text-center w-75 mx-auto pt-3" style="color: white;">In the game interface the first thing you will find is the board you have to build where 
         you have to set the number of rows and columns that your level will have. Once you have set 
@@ -277855,7 +277873,8 @@ function getRowHTML$8() {
         the character and the escape ladder. After that you can press <strong>save!</strong></p>
 
         <img src="/images/board_example.png" alt="Board Example" class="mx-auto d-block" style="width: 50%; margin-top: 15px;">
-  
+        </div>
+        <div class="container bg-dark rounded-3 mt-3 pb-3">
         <h3 class="text-center w-75 mx-auto pt-3" style="color: white;">Level Settings</h3>
         <p class="text-center w-75 mx-auto pt-3" style="color: white;">    
         When you click on save you will see the screen where you can configure the level.  
@@ -277868,8 +277887,8 @@ function getRowHTML$8() {
        <img src="/images/BlockLimits.png" alt="Block Limits" class="d-block" style="width: 20%; margin-top: 15px; float: left;">
        <img src="/images/SaveLevel.png" alt="Save Level" class="d-block" style="width: 20%; margin-top: 15px; float: center;">
        <img src="/images/publish.png" alt="Publish Level" class="d-block" style="width: 20%; margin-top: 15px; float: right;">
-
-
+       </div>
+       </div>
 
     `;
 }
@@ -277885,8 +277904,18 @@ async function CreateLevelsLoader() {
  */
 function getRowHTML$7() {
     return `
-        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">How to play</h1>
-       
+        <div class="container bg-body rounded-3 mt-3 p-3">
+        <h1 class="text-center w-75 mx-auto bg-secondary rounded-3 p-3" style="color: white;">How to play</h1>
+        <div class="container bg-secondary rounded-3 mt-3 pb-3">
+        <p class="text-center w-75 mx-auto pt-3" style="color: white;">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vehicula semper nibh quis tincidunt. 
+        Integer vel molestie justo, in dictum nunc. Suspendisse dapibus volutpat lacus. Nunc cursus commodo libero, 
+        a molestie eros dictum vel. Duis porta magna sed fringilla imperdiet. Morbi ornare lacus ante. Sed commodo maximus elit, 
+        nec auctor nisl iaculis vel. Nulla sed pretium urna, sed varius justo. Mauris facilisis euismod hendrerit. Maecenas pretium, ex vitae porttitor ullamcorper, 
+        nisl tellus ultrices ipsum, feugiat laoreet sem massa ac metus. Integer pulvinar commodo varius. Donec et cursus arcu. 
+        Suspendisse lacinia sem sit amet elementum luctus. Pellentesque in lorem at urna blandit molestie. Curabitur non suscipit leo. Quisque tristique posuere dolor, vel vehicula arcu sodales at.</p>
+        </div>
+        </div>
     `;
 }
 async function HowtoPlay() {
@@ -277901,8 +277930,15 @@ async function HowtoPlay() {
  */
 function getRowHTML$6() {
     return `
-        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Classrooms tutorial</h1>
-       
+      <div class="container bg-body rounded-3 mt-3 pb-3">
+          <h1 class="text-center w-75 mx-auto pt-3">Classrooms tutorial</h1>
+        <p class="text-center w-75 mx-auto pt-3" >
+          Once you enter the classroom tab, if you haven't signed in, you will need to do so in order to enjoy the benefits of being part of a class.<br><br>
+          If you are already signed in, you will find a button at the top to join classes using a code. If you don’t have a code, contact your teacher and they will provide it for you.<br><br>
+          Once you’ve joined one or more classes, select the one you want to enter.<br><br>
+          Inside the class, at the top, you’ll find sets of levels that the teacher has created for the entire class. At the bottom, you’ll see individual levels that the teacher has selected as interesting for you to complete.
+        </p>
+      <div>
     `;
 }
 async function classroomsTutorialLoader() {
@@ -277917,7 +277953,14 @@ async function classroomsTutorialLoader() {
  */
 function getRowHTML$5() {
     return `
+          <div class="container bg-dark rounded-3 mt-3 pb-3">
         <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Community tutorial</h1>
+        <p class="text-center w-75 mx-auto pt-3" style="color: white;">
+        In the community section, we will share the levels we choose to and view those shared by users from all around the world.  
+          At the top, you’ll find a filtering bar with tags to help you find levels associated with them.  
+          Below this bar, you’ll see all the levels published by users in the community. If you’ve applied any filters, only the levels that match them will be displayed.
+        </p>
+        </div>
     `;
 }
 async function CommunityTutorial() {
@@ -277932,7 +277975,14 @@ async function CommunityTutorial() {
  */
 function getRowHTML$4() {
     return `
-        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Profile tutorial</h1>
+        <div class="container bg-dark-subtle rounded-3 mt-3 pb-3">
+        <h1 class="text-center w-75 mx-auto pt-3" ">Profile tutorial</h1>
+        <p class="text-center w-75 mx-auto pt-3"">
+        In the user's profile, at the top, we’ll see information related to ourselves and our progress in the game, such as completed levels and stars earned.
+At the bottom, all the levels the user has created in the game editor will be displayed, allowing quick and organized access to them.
+        </p>
+        </div>
+        
        
     `;
 }

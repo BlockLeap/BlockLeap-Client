@@ -9,8 +9,10 @@ const API_ENDPOINT = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.API
  * @returns String of HTMLDivElement for showing levels/categories
  */
 function getRowHTML() {
-    return `
-        <h1 class="text-center w-75 mx-auto pt-3" style="color: white;">Create Levels</h1>
+    return `        
+      <div class="container bg-body rounded-3 mt-3 p-3">
+        <h1 class="text-center w-75 mx-auto p-3 bg-dark rounded-3" style="color: white;">Create Levels</h1>
+        <div class="container bg-dark rounded-3 mt-3 pb-3">
         <h3 class="text-center w-75 mx-auto pt-3" style="color: white;">Create Board</h3>
         <p class="text-center w-75 mx-auto pt-3" style="color: white;">In the game interface the first thing you will find is the board you have to build where 
         you have to set the number of rows and columns that your level will have. Once you have set 
@@ -20,7 +22,8 @@ function getRowHTML() {
         the character and the escape ladder. After that you can press <strong>save!</strong></p>
 
         <img src="/images/board_example.png" alt="Board Example" class="mx-auto d-block" style="width: 50%; margin-top: 15px;">
-  
+        </div>
+        <div class="container bg-dark rounded-3 mt-3 pb-3">
         <h3 class="text-center w-75 mx-auto pt-3" style="color: white;">Level Settings</h3>
         <p class="text-center w-75 mx-auto pt-3" style="color: white;">    
         When you click on save you will see the screen where you can configure the level.  
@@ -33,8 +36,8 @@ function getRowHTML() {
        <img src="/images/BlockLimits.png" alt="Block Limits" class="d-block" style="width: 20%; margin-top: 15px; float: left;">
        <img src="/images/SaveLevel.png" alt="Save Level" class="d-block" style="width: 20%; margin-top: 15px; float: center;">
        <img src="/images/publish.png" alt="Publish Level" class="d-block" style="width: 20%; margin-top: 15px; float: right;">
-
-
+       </div>
+       </div>
 
     `;
 }
