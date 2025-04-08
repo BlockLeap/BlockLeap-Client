@@ -53,17 +53,18 @@ function getStarsInfo(levelJSON: Level.Level, fromLevelEditor?: boolean) {
     if (fromLevelEditor) {
         return ''; // No mostrar nada si estamos en el editor
     }
+    
     currentLevelJSON = levelJSON;
-    if (currentLevelJSON.firstStar === undefined && currentLevelJSON.secondStar === undefined && currentLevelJSON.thirdStar === undefined) {
+    if (currentLevelJSON.firstStar.first === undefined && currentLevelJSON.secondStar.first === undefined && currentLevelJSON.thirdStar.first === undefined) {
         return ''; // No hacer nada si no existen
     }
     return `<div style="position: absolute; top: 3%; right: 5%; margin-top: 60px; margin-right: 0px; background: #833c51; color: white; border: 2px solid #ffc107; border-radius: 10px; width: 150px; padding: 10px; font-size: 14px;">
                     <h2 style="background: #ffc107; color: black; font-size: 12px; text-align: center; padding: 5px; margin: -10px -10px 10px -10px; border-top-left-radius: 8px; border-top-right-radius: 8px;">
                     COLLECT ALL STARS:</h2>
                     <ul>
-                        ${currentLevelJSON.firstStar ? `<li><i class="bi bi-star-fill"></i>${currentLevelJSON.firstStar}</li>` : ""}
-                        ${currentLevelJSON.secondStar ? `<li><i class="bi bi-star-fill"></i>${levelJSON.secondStar}</li>` : ""}
-                        ${currentLevelJSON.thirdStar ? `<li><i class="bi bi-star-fill"></i>${levelJSON.thirdStar}</li>` : ""}
+                        ${currentLevelJSON.firstStar.first ? `<li><i class="bi bi-star-fill"></i>${currentLevelJSON.firstStar.second}</li>` : ""}
+                        ${currentLevelJSON.secondStar.first ? `<li><i class="bi bi-star-fill"></i>${levelJSON.secondStar.second}</li>` : ""}
+                        ${currentLevelJSON.thirdStar.first ? `<li><i class="bi bi-star-fill"></i>${levelJSON.thirdStar.second}</li>` : ""}
                     </ul>
                 </div>`;
 }

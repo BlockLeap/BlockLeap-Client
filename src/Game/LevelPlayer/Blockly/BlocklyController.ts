@@ -183,8 +183,13 @@ export default class BlocklyController {
       this.numBlocksUsed = prepBlocks.length;
       for (let block of prepBlocks) {
         //se ha usado algun bucle loop
-        if(block.type === "for_X_times")
+        if(block.type === "for_X_times"){
           this.usedLoop = true;
+        }
+        // Comprobar si se ha usado algún bloque de tipo "variable"
+        if (block.type === "variables_set") {
+          this.variableUsed = true;
+        }
         if (this.changeData) {
           this.workspace.getBlockById(this.changeData.blockId).setFieldValue(this.changeData.newValue, this.changeData.name);
           this.changeData = null;

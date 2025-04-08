@@ -1,3 +1,5 @@
+import { Pair } from "matter";
+
 declare namespace Level {
     interface Level {
         LoopUsed: boolean;
@@ -5,11 +7,16 @@ declare namespace Level {
         MinBlocksUsed: number;
         phaser: Phaser;
         blockly: Blockly;
-        firstStar: string;
-        secondStar: string;
-        thirdStar: string;
+        firstStar: Pair;
+        secondStar: Pair;
+        thirdStar: Pair;
+        totalChests: number;
     }
-
+    
+    interface Pair{
+        first:string;
+        second:string;
+    }
    
     interface Phaser {
         width: number;

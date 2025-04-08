@@ -61,6 +61,9 @@ export default class LevelPlayer extends Phaser.Scene {
   init(data: { levelJSON: Level.Level, fromLevelEditor?: boolean }) {
     this.levelJSON = data.levelJSON;
     this.fromLevelEditor = data.fromLevelEditor;
+    this.levelJSON.firstStar = this.levelJSON.firstStar || { first: "", second: "" };
+    this.levelJSON.secondStar = this.levelJSON.secondStar || { first: "", second: "" };
+    this.levelJSON.thirdStar = this.levelJSON.thirdStar || { first: "", second: "" };
     const { theme, height, width, layers } = this.levelJSON.phaser;
     const { background, players, objects } = layers;
     this.theme = theme;
@@ -353,66 +356,51 @@ export default class LevelPlayer extends Phaser.Scene {
         const event = new CustomEvent("lose");
         document.dispatchEvent(event);
       } else { // ESTRELLAS
+
         let loopAct = this.blockyController.getUsedLoop();
         let blocksUsed = this.blockyController.getUsedBlocks();
         let variablesUsed = this.blockyController.getUsedVariable();
+        const totalChests = this.totalCofres;
+        const collectedCh= this.totalCofres-this.numChests;
+      //   const usedTags = new Set<string>([
+      //     (document.getElementById("star1Tag") as HTMLSelectElement).value,
+      //     (document.getElementById("star2Tag") as HTMLSelectElement).value,
+      //     (document.getElementById("star3Tag") as HTMLSelectElement).value,
+      // ]);
+      //this.updateTagOptions(usedTags, loopAct, variablesUsed, blocksUsed, totalChests);
 
-        if(this.levelJSON.LoopUsed && this.levelJSON.variableUsed){ // ha usado un loop y variable, una estrella a repartir solo 
-          if(loopAct)stars++; // si se usa loop una estrella por eso, resto de cosas solo se pueden repartir 1 estrella
-          if(variablesUsed)stars++;// igual para si se usa la variable
-          if(this.totalCofres > 0){
-            const cofresRecogidos = this.players.reduce((acc, player) => acc + player.getCollectedChest(), 0);
-            const estrellasPorCofres = Math.floor((cofresRecogidos / this.totalCofres)); // Proporcional a cofres recogidos
-            stars += estrellasPorCofres;
-          }
-          else if(this.levelJSON.MinBlocksUsed >= blocksUsed) stars++;// si se han usado menos bloques que el minimo
+  
+        if((this.levelJSON.firstStar.first == "loop" || this.levelJSON.secondStar.first== "loop" || this.levelJSON.thirdStar.first == "variable") && loopAct ){
+          stars ++;
         }
-        else{
-          if(this.totalCofres >= 3){
-            if(this.levelJSON.variableUsed || this.levelJSON.LoopUsed){ // ha usado un loop o variable no ambas, una estrella
-              if(variablesUsed || loopAct)stars++; // si se usa loop o var una estrella por eso, resto de cosas solo se pueden repartir dos estrellas
-              const cofresRecogidos = this.players.reduce((acc, player) => acc + player.getCollectedChest(), 0);
-              const estrellasPorCofres = Math.floor((cofresRecogidos / this.totalCofres) * 2); // Proporcional a cofres recogidos
-              stars += estrellasPorCofres;
-            }
-            else{
-              const cofresRecogidos = this.players.reduce((acc, player) => acc + player.getCollectedChest(), 0);
-              const estrellasPorCofres = Math.floor((cofresRecogidos / this.totalCofres) * 3); // Proporcional a cofres recogidos
-              stars += estrellasPorCofres;
-            }
-          }
-          else if(this.totalCofres <= 2){ //2 o menos cofres
-            if(this.levelJSON.LoopUsed || this.levelJSON.variableUsed){ // ha usado un loop o variable, 2 estrellas a repartir
-              if(loopAct) stars++;
-              else if(variablesUsed) stars++;
-              else if(this.totalCofres === 1){
-                if(blocksUsed <= this.levelJSON.MinBlocksUsed) stars++;
-              }
-              else if(this.totalCofres === 0){
-                if(blocksUsed <= this.levelJSON.MinBlocksUsed + 2) stars++;
-                if(blocksUsed <= this.levelJSON.MinBlocksUsed) stars++;
-              }
-            }
-            else{ // dos o menos cofres y no se usa loop, se tiene en cuenta el min block used
-              if(this.totalCofres === 2){
-                if(blocksUsed <= this.levelJSON.MinBlocksUsed) stars++;
-              }
-              else if(this.totalCofres === 1){
-                if(blocksUsed <= this.levelJSON.MinBlocksUsed + 2) stars++;
-                if(blocksUsed <= this.levelJSON.MinBlocksUsed) stars++;
-              }
-              else{
-                if (!playerBounced) stars++; // no se ha chocado 
-                if(blocksUsed <= this.levelJSON.MinBlocksUsed + 2) stars++; // numero de movimientos eficiente
-                if(blocksUsed <= this.levelJSON.MinBlocksUsed) stars++;
-              }
-            }
 
-          }
-          const cofresRecogidos = this.players.reduce((acc, player) => acc + player.getCollectedChest(), 0);
-          const estrellasPorCofres = cofresRecogidos; // Proporcional a cofres recogidos
-          stars += estrellasPorCofres;
+        if((this.levelJSON.firstStar.first == "variable" || this.levelJSON.secondStar.first == "variable" || this.levelJSON.thirdStar.first == "variable") && variablesUsed ){
+          stars ++;
         }
+
+        if((this.levelJSON.firstStar.first == "blocks-max" || this.levelJSON.secondStar.first== "blocks-max" || this.levelJSON.thirdStar.first == "blocks-max") && blocksUsed <= this.levelJSON.MinBlocksUsed ){
+          stars ++;
+        }
+
+        if((this.levelJSON.firstStar.first == "blocks-medium" || this.levelJSON.secondStar.first == "blocks-medium" || this.levelJSON.thirdStar.first == "blocks-medium") && blocksUsed <= this.levelJSON.MinBlocksUsed + 2 ){
+          stars ++;
+        }
+
+        if((this.levelJSON.firstStar.first == "chests-max" || this.levelJSON.secondStar.first == "chests-max" || this.levelJSON.thirdStar.first == "chest-max") && this.numChests == this.totalCofres ){
+          stars ++;
+        }
+        if((this.levelJSON.firstStar.first == "chests-middle" || this.levelJSON.secondStar.first == "chests-middle" || this.levelJSON.thirdStar.first == "chest-middle") && this.numChests >= this.totalCofres / 2 ){
+          stars ++;
+        }
+
+        if(this.levelJSON.firstStar.first == "complete" || this.levelJSON.secondStar.first == "complete" || this.levelJSON.thirdStar.first == "complete"){
+          stars ++;
+        }
+
+        if((this.levelJSON.firstStar.first == "no-bounce" || this.levelJSON.secondStar.first == "no-bounce" || this.levelJSON.thirdStar.first == "no-bounce") && !playerBounced ){
+          stars ++;
+        }
+          //Actualizar visualizacion de estrellas
         this.createStarDisplay();
         this.updateStarDisplay(stars);
        
@@ -438,66 +426,34 @@ export default class LevelPlayer extends Phaser.Scene {
       this.levelJSON.MinBlocksUsed = this.blockyController.getUsedBlocks();
       this.levelJSON.LoopUsed = this.blockyController.getUsedLoop();
       this.levelJSON.variableUsed = this.blockyController.getUsedVariable();
-      if(this.levelJSON.LoopUsed && this.levelJSON.variableUsed){ // ha usado un loop y variable
-        this.levelJSON.firstStar = "Use a loop";
-        this.levelJSON.secondStar = "Use a variable";
-        if(this.totalCofres > 0){
-          this.levelJSON.thirdStar = "Collect all chests";
-        }
-        else{
-          this.levelJSON.thirdStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
-        }
-      }
-      else{
-        if(this.totalCofres >= 3){
-          if(this.levelJSON.variableUsed || this.levelJSON.LoopUsed){ // ha usado un loop o variable no ambas, una estrella
-            if(this.levelJSON.variableUsed ){this.levelJSON.firstStar = "Use a variable";}
-            else if(this.levelJSON.LoopUsed){this.levelJSON.firstStar = "Use a loop";}
-          }
-          else{
-            this.levelJSON.firstStar = "Collect the maximum amount of chests"; 
-          }
-        }
-        else if(this.totalCofres <= 2){ //2 o menos cofres
-          if(this.levelJSON.LoopUsed || this.levelJSON.variableUsed){ // ha usado un loop o variable, 2 estrellas a repartir
-            this.levelJSON.secondStar = "Collect a chest";
-            this.levelJSON.thirdStar = "Collect a chest";
-            if(this.levelJSON.variableUsed ){this.levelJSON.firstStar = "Use a variable";}
-            else if(this.levelJSON.LoopUsed){this.levelJSON.firstStar = "Use a loop";}
-            else if(this.totalCofres === 1){
-              this.levelJSON.secondStar = "Collect the chest";
-              this.levelJSON.thirdStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
-            }
-            else if(this.totalCofres === 0){
-              this.levelJSON.secondStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
-              const newMinBlocks = this.levelJSON.MinBlocksUsed + 2;
-              this.levelJSON.thirdStar = "Use " + newMinBlocks + " or less blocks";
-            }
-          }
-          else{ // dos o menos cofres y no se usa loop, se tiene en cuenta el min block used
-            if(this.totalCofres === 2){
-              this.levelJSON.firstStar = "Collect a chest";
-              this.levelJSON.secondStar = "Collect a chest";
-              this.levelJSON.thirdStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
-            }
-            else if(this.totalCofres === 1){
-              this.levelJSON.firstStar = "Collect the chest";
-              this.levelJSON.secondStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
-              const newMinBlocks = this.levelJSON.MinBlocksUsed + 2;
-              this.levelJSON.thirdStar = "Use " + newMinBlocks + " or less blocks";
-            }
-            else{
-              this.levelJSON.firstStar = "Don't bounce";
-              this.levelJSON.secondStar = "Use " + this.levelJSON.MinBlocksUsed + " or less blocks";
-              const newMinBlocks = this.levelJSON.MinBlocksUsed + 2;
-              this.levelJSON.thirdStar = "Use " + newMinBlocks + " or less blocks";
-            }
-          }
-        }
-      }
+
+      let loopAct = this.blockyController.getUsedLoop();
+      let blocksUsed = this.blockyController.getUsedBlocks();
+      let variablesUsed = this.blockyController.getUsedVariable();
+      const totalChests = this.totalCofres;
+      const collectedCh= this.totalCofres-this.numChests;
+      const usedTags = new Set<string>([
+        null,//(document.getElementById("star1Tag") as HTMLSelectElement).value,
+        null,//(document.getElementById("star2Tag") as HTMLSelectElement).value,
+        null,//(document.getElementById("star3Tag") as HTMLSelectElement).value,
+    ]);
+    const star1Tag = null;//(document.getElementById("star1Tag") as HTMLSelectElement).value;
+    const star2Tag = null;//(document.getElementById("star2Tag") as HTMLSelectElement).value;
+    const star3Tag = null;//(document.getElementById("star3Tag") as HTMLSelectElement).value;
+
+      // Obtener las condiciones seleccionadas en las estrellas
+
+       // Asignar las condiciones a this.levelJSON
+       this.levelJSON.firstStar.first = star1Tag || "";
+       this.levelJSON.secondStar.first = star2Tag || "";
+       this.levelJSON.thirdStar.first = star3Tag || "";
+       this.updateTagOptions(usedTags, loopAct, variablesUsed, blocksUsed, collectedCh);
+
+       
       if (object !== null) {
         console.log(JSON.stringify(this.levelJSON));
-        this.getAppendCreateLevelModal(object.id,true);         
+        this.getAppendCreateLevelModal(object.id,true); 
+             
       } else alert("You need to sign in before saving a level");
     }
   };
@@ -662,6 +618,52 @@ export default class LevelPlayer extends Phaser.Scene {
     console.log(JSON.stringify(toolboxContent));
   }
 
+  
+  private updateTagOptions = (usedTags: Set<string>, loopUsed: boolean, variableUsed: boolean, blocksUsed: number, collectedChests: number) => {
+    const options = [
+        { value: "loop", text: "Use a loop", condition: loopUsed },
+        { value: "variable", text: "Use a variable", condition: variableUsed },
+        { value: `blocks-max`, text: `Use ${blocksUsed} or less blocks`, condition: blocksUsed > 0 },
+        { value: `blocks-medium`, text: `Use ${blocksUsed + 2} or less blocks`, condition: blocksUsed > 0 },
+        { value: `chests-max`, text: `Collect all chests ${collectedChests}`, condition: collectedChests > 0 },
+        { value: `chests-middle`, text: `Collect at least ${Math.ceil(collectedChests / 2)} chests`, condition: collectedChests > 1 },
+        { value: "no-bounce", text: "Not bounce", condition: true },
+        { value: "complete", text: "Complete the level", condition: true },
+        { value: "none", text: "In this level you can only catch two stars", condition: true },
+      ];
+      return options;
+  }
+
+  private updateTagOptions2 = (usedTags: Set<string>, loopUsed: boolean, variableUsed: boolean, blocksUsed: number, totalChests: number) => {
+    const options = this.updateTagOptions(usedTags, loopUsed, variableUsed, blocksUsed, totalChests);
+    const selects = ["star1Tag", "star2Tag", "star3Tag"];
+    selects.forEach((selectId) => {
+      
+        const select = document.getElementById(selectId) as HTMLSelectElement;
+        if (!select) return; // Verificar si el elemento existe
+
+        const currentValue = select.value;
+        select.innerHTML = ""; // Limpiar opciones
+
+        // Agregar la opción predeterminada "Select a tag"
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "Select a tag";
+        select.appendChild(defaultOption);
+
+        options.forEach((option) => {
+            if (option.condition && (!usedTags.has(option.value) || option.value === currentValue)) {
+                const opt = document.createElement("option");
+                opt.value = option.value;
+                opt.textContent = option.text;
+                opt.setAttribute("data-selected", usedTags.has(option.value) ? "true" : "false");
+                select.appendChild(opt);
+            }
+        });
+        select.value = currentValue || ""; // Mantener el valor seleccionado
+    });
+  }
+
   private getAppendCreateLevelModal(userId,canPublish){
     let createModal= `
         <div id="levelCreateModal" class="modal fade" tabindex="-1" aria-labelledby="createLevelLabel" aria-hidden="true">
@@ -694,9 +696,31 @@ export default class LevelPlayer extends Phaser.Scene {
                               <label for="publishCheck" class="form-label" >${canPublish ?'Publish this level':`Clear this level to be able to publish`}</label>
                             </div>
                         </form>
+                        <hr>
+                        <h5 class="text-center">Stars selector</h5>
+                        <div class="d-flex justify-content-center mb-3">
+                            <div class="text-center mx-2">
+                                <i class="bi bi-star-fill h2" id="star1" style="color: #555555;"></i>
+                                <select id="star1Tag" class="form-select mt-2">
+                                    <option value="">Select a tag</option>
+                                </select>
+                            </div>
+                            <div class="text-center mx-2">
+                                <i class="bi bi-star-fill h2" id="star2" style="color: #555555;"></i>
+                                <select id="star2Tag" class="form-select mt-2">
+                                    <option value="">Select a tag</option>
+                                </select>
+                            </div>
+                            <div class="text-center mx-2">
+                                <i class="bi bi-star-fill h2" id="star3" style="color: #555555;"></i>
+                                <select id="star3Tag" class="form-select mt-2">
+                                    <option value="">Select a tag</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Sumbit" id="level_sumbit">SUMBIT</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Sumbit" id="level_submit" disabled>SUMBIT</button>
                         <span id="text-error-createLevel"></span>
                     </div>
                 </div>
@@ -713,10 +737,75 @@ export default class LevelPlayer extends Phaser.Scene {
         createLevelModalElement.addEventListener("hidden.bs.modal", function () {
             createLevelModalElement.remove();
         });
+        createLevelModalInstance.show();
+        const collectedCh= this.totalCofres-this.numChests;
+        this.updateTagOptions2(
+          new Set<string>(), // No hay tags usados inicialmente
+          this.levelJSON.LoopUsed || false,
+          this.levelJSON.variableUsed || false,
+          this.levelJSON.MinBlocksUsed || 0,
+          collectedCh || 0
+      );
+              
+        const validateStars = () => {
+          const star1Tag = (document.getElementById("star1Tag") as HTMLSelectElement).value;
+          const star2Tag = (document.getElementById("star2Tag") as HTMLSelectElement).value;
+          const star3Tag = (document.getElementById("star3Tag") as HTMLSelectElement).value;
 
-        let sumbitBtn = document.getElementById("level_sumbit");
+          const submitBtn = document.getElementById("level_submit") as HTMLButtonElement;
+          
+          (document.getElementById("star1") as HTMLElement).style.color = star1Tag && star1Tag !== "" ? "#ffd700" : "#555555";
+          (document.getElementById("star2") as HTMLElement).style.color = star2Tag && star2Tag !== "" ? "#ffd700" : "#555555";
+          (document.getElementById("star3") as HTMLElement).style.color = star3Tag && star3Tag !== "" ? "#ffd700" : "#555555";
+         
+          // Habilitar el botón si todas las estrellas tienen un tag seleccionado
+          submitBtn.disabled = !(star1Tag && star1Tag !== "" && star2Tag && star2Tag !== "" && star3Tag && star3Tag !== "");
+
+           // Actualizar las opciones de los selectores para excluir los tags seleccionados
+           const usedTags = new Set<string>([star1Tag, star2Tag, star3Tag]);
+           const collectedCh= this.totalCofres-this.numChests;
+           this.updateTagOptions2(
+               usedTags,
+               this.levelJSON.LoopUsed || false,
+               this.levelJSON.variableUsed || false,
+               this.levelJSON.MinBlocksUsed || 0,
+               collectedCh || 0
+           );
+        };
+
+        let sumbitBtn = document.getElementById("level_submit");
         if (sumbitBtn) {
         sumbitBtn.addEventListener("click", async ()=> {
+           // Obtener los valores seleccionados de los selectores
+    const star1Tag = (document.getElementById("star1Tag") as HTMLSelectElement).value;
+    const star2Tag = (document.getElementById("star2Tag") as HTMLSelectElement).value;
+    const star3Tag = (document.getElementById("star3Tag") as HTMLSelectElement).value;
+
+    // Obtener las opciones disponibles para buscar el texto correspondiente
+    const collectedCh= this.totalCofres-this.numChests;
+    const options = this.updateTagOptions(
+        new Set<string>(), // Puedes pasar los tags usados si es necesario
+        this.levelJSON.LoopUsed || false,
+        this.levelJSON.variableUsed || false,
+        this.levelJSON.MinBlocksUsed || 0,
+        collectedCh || 0
+    );
+
+    // Guardar los valores seleccionados en `first` y el texto correspondiente en `second`
+    this.levelJSON.firstStar = {
+        first: star1Tag || "",
+        second: options.find(option => option.value === star1Tag)?.text || ""
+    };
+
+    this.levelJSON.secondStar = {
+        first: star2Tag || "",
+        second: options.find(option => option.value === star2Tag)?.text || ""
+    };
+
+    this.levelJSON.thirdStar = {
+        first: star3Tag || "",
+        second: options.find(option => option.value === star3Tag)?.text || ""
+    };
           // Preguntar al usuario el nombre del nivel
           const levelName = (document.getElementById("level_name") as HTMLInputElement).value;
           const levelDescription= (document.getElementById("level_desc") as HTMLInputElement).value;
@@ -733,7 +822,10 @@ export default class LevelPlayer extends Phaser.Scene {
             minBlocks: this.levelJSON.MinBlocksUsed,
             description: levelDescription,
             publish:canPublish?publishCheck:false,
-            tags:tags
+            tags:tags,
+            firstStar: this.levelJSON.firstStar,
+            secondStar: this.levelJSON.secondStar,
+            thirdStar: this.levelJSON.thirdStar
           };
           try {
             if(levelData.level_id){
@@ -748,11 +840,26 @@ export default class LevelPlayer extends Phaser.Scene {
             alert("Connection to server failed");
           }
             
+          this.updateTagOptions2(new Set(tags), this.levelJSON.LoopUsed, this.levelJSON.variableUsed, this.levelJSON.MinBlocksUsed, collectedCh);
+          
+          console.log("Nivel completado con las siguientes condiciones:");
+          console.log(`Primera estrella: ${this.levelJSON.firstStar}`);
+          console.log(`Segunda estrella: ${this.levelJSON.secondStar}`);
+          console.log(`Tercera estrella: ${this.levelJSON.thirdStar}`);
         });
         }
         $('#tagSelect').select2({placeholder:"Filter by tags",allowClear:true,dropdownParent: $('#levelCreateModal')
         });
+        
         createLevelModalInstance.show();
+        
+        // Agregar eventos de cambio a los selectores de estrellas
+        document.getElementById("star1Tag").addEventListener("change", validateStars);
+        document.getElementById("star2Tag").addEventListener("change", validateStars);
+        document.getElementById("star3Tag").addEventListener("change", validateStars);
+        
+        // Ejecutar la validación inicial al cargar el modal
+        validateStars();
   }
 
   saveLevel=async ()=>{
