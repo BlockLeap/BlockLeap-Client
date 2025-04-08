@@ -37,6 +37,7 @@ export default class EnemyObject extends ArticodingSprite {
     }
 
     collide(player: Player): void {
+        player.kill();
     }
 
     private move = () => {
@@ -87,7 +88,7 @@ export default class EnemyObject extends ArticodingSprite {
         // Set new idle frame
         // this.setFrame(0);
 
-        this.gridPhysics.collide(this);
+        //this.gridPhysics.collide(this);
     }
 
     private moveTween() {

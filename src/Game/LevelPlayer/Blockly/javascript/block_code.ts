@@ -76,6 +76,15 @@ export function defineAllBlocks() {
     return JSON.stringify(code);
   });
 
+  //changeStatus block, changes the status of the specified object
+  javascriptGenerator.forBlock["switchStatus"] = wrapBlockFunction("switchStatus", function (block: Block, generator: any) {
+    let code = {
+      blockId: block.id,
+      eventName: "switch_status",
+    };
+    return JSON.stringify(code);
+  });
+
   //number block:
   javascriptGenerator.forBlock["math_block"] = wrapBlockFunction("math_block", function (block: Block, generator: any): [string, Order] {
     // Numeric value.
@@ -190,5 +199,22 @@ export function defineAllBlocks() {
     // Variable getter.
     const varName = block.getFieldValue('VAR');
     return [variables[varName], Order.ATOMIC];
+  });
+
+  javascriptGenerator.forBlock["math_change"] = wrapBlockFunction("math_change", function (block: Block, generator: any) {
+    // Variable getter.
+    const argument0 = generator.valueToCode(block, 'DELTA', Order.ASSIGNMENT) || '0';
+    let varName = block.getFieldValue('VAR');
+    let num= Number(variables[varName]);
+    variables[varName] = String(num+ Number(argument0));
+    let code = {
+      blockId: block.id,
+      eventName: "variables_change",
+      data: {
+        varName: varName,
+        value: argument0
+      }
+    };
+    return JSON.stringify(code);
   });
 }

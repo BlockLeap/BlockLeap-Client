@@ -89,4 +89,13 @@ export default [
         "tooltip": "Changes the status of the specified object",
         "helpUrl": ""
     },
+    {
+        "type": "switchStatus",
+        "message0": "Switch trap status",
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": "#745ba5",
+        "tooltip": "Flips the traps status",
+        "helpUrl": ""
+    }
 ];

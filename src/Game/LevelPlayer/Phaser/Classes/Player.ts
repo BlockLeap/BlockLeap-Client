@@ -128,6 +128,7 @@ export class Player {
     }
 
     kill() {
+        this.die();
         this.isAlive = false;
     }
 
