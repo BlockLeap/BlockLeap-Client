@@ -11,6 +11,11 @@ const API_ENDPOINT = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.API
  */
 function getRowHTML() {
     return `
+      <div class="container bg-body rounded-3 mt-3 pb-3">
+        <label for="level_desc" class="form-label" >Markdown</label>
+        <textarea class="form-control" size="600" id="markdownText"></textarea>
+        <button class="btn btn-primary" id="markdownBtn">Parse</button>
+      </div>
       <div class="container bg-body rounded-3 mt-3 pb-3" id="tutorialContent">
           <h1 class="text-center w-75 mx-auto pt-3">Classrooms tutorial</h1>
         <p class="text-center w-75 mx-auto pt-3" >
@@ -22,8 +27,10 @@ function getRowHTML() {
       <div>
     `;
 }
-
-
+async function parseMarkdown(){
+  const text = (document.getElementById("markdownText")as HTMLInputElement).value;
+  document.getElementById("tutorialContent").innerHTML = await marked.parse(text);
+}
 
 
 export default async function classroomsTutorialLoader() {
@@ -32,8 +39,9 @@ export default async function classroomsTutorialLoader() {
   const divElement = document.getElementById("categories");
   document.getElementById("tutorialContent").innerHTML = await marked.parse(`
   # Markdown formatted text
-  This is **Markdown*`);
-
+  This is **Markdown**`);
+  $('#markdownBtn').on("click", parseMarkdown);
+  $('#markdownText').on("keyup", parseMarkdown);
 
   try {
 
