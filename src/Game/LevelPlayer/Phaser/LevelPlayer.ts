@@ -37,7 +37,7 @@ export default class LevelPlayer extends Phaser.Scene {
   private scaleFactor: number;
   private blockyController: BlocklyController;
 
-  private blockMap={"movement":"Actions", "math_number":"Numbers","for_X_times":"Loops", "changeStatus":"Actions", "variables_set":"Variables","variables_get":"Variables",
+  private blockMap={"movement":"Actions", "math_number":"Numbers","for_X_times":"Loops", "changeStatus":"Actions","switchStatus":"Actions", "variables_set":"Variables","variables_get":"Variables",
     "math_change": "Variables"};
 
   private players: Player[] = [];

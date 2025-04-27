@@ -90,8 +90,8 @@ function getBlockLimitButton(fromLevelEditor: boolean) {
             </button>` :'';
 }
 function getBlockLimitMenu(fromLevelEditor: boolean) {
-    var nameMap={"movement":"Actions", "math_number":"Numbers","for_X_times":"Loops", "changeStatus":"Change Trap"};
-    var blockMap={"movement":"Actions", "math_number":"Numbers","for_X_times":"Loops", "changeStatus":"Actions"};
+    var nameMap={"movement":"Actions", "math_number":"Numbers","for_X_times":"Loops", "changeStatus":"Change Trap","switchStatus":"Switch Traps"};
+    var blockMap={"movement":"Actions", "math_number":"Numbers","for_X_times":"Loops", "changeStatus":"Actions","switchStatus":"Actions"};
     var menu=
     `<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasBlockLimit" aria-labelledby="offcanvasBlockLimitLabel">
         <div class="offcanvas-header">
