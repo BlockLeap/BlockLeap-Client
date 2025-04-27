@@ -2,21 +2,23 @@ import { route } from "../../../client";
 import config from "../../../Game/config.js";
 import { fetchRequest, fillContent } from "../../utils";
 import {marked} from 'marked';
+import { sessionCookieValue } from "../profileLoader";
+
 
 const API_ENDPOINT = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.API_PORT}/api`;
-
+const tutorialName="classroom";
 /**
  *
  * @returns String of HTMLDivElement for showing levels/categories
  */
-function getRowHTML() {
-    return `
-      <div class="container bg-body rounded-3 mt-3 pb-3">
+function getRowHTML(session) {
+  
+    return `${session && session.role=="Admin" ? `<div class="container bg-body rounded-3 mt-3 pb-3">
         <label for="level_desc" class="form-label" >Markdown</label>
-        <textarea class="form-control" size="600" id="markdownText"></textarea>
-        <button class="btn btn-primary" id="markdownBtn">Parse</button>
-      </div>
-      <div class="container bg-body rounded-3 mt-3 pb-3" id="tutorialContent">
+        <textarea class="form-control" id="markdownText"></textarea>
+        <button class="btn btn-primary" id="markdownBtn">Update</button>
+      </div>`:``}
+      <div class="container bg-body rounded-3 mt-3 pb-3 text-center" id="tutorialContent">
           <h1 class="text-center w-75 mx-auto pt-3">Classrooms tutorial</h1>
         <p class="text-center w-75 mx-auto pt-3" >
           Once you enter the classroom tab, if you haven't signed in, you will need to do so in order to enjoy the benefits of being part of a class.<br><br>
@@ -32,15 +34,29 @@ async function parseMarkdown(){
   document.getElementById("tutorialContent").innerHTML = await marked.parse(text);
 }
 
+async function update(){
+  let postData = {
+    name: tutorialName,
+    content:(document.getElementById("markdownText")as HTMLInputElement).value
+  };
+  try{
+    const update = await fetchRequest(`${API_ENDPOINT}/tutorial/update/`,"POST",JSON.stringify(postData));}
+  catch{
+
+  }
+}
 
 export default async function classroomsTutorialLoader() {
+  const tutorial = await fetchRequest(`${API_ENDPOINT}/tutorial/${tutorialName}`, "GET");
+  const session = sessionCookieValue();
   history.pushState({}, "", "/tutorials/classrooms");
-  document.getElementById("content").innerHTML = getRowHTML();
+  document.getElementById("content").innerHTML = getRowHTML(session);
   const divElement = document.getElementById("categories");
-  document.getElementById("tutorialContent").innerHTML = await marked.parse(`
-  # Markdown formatted text
-  This is **Markdown**`);
-  $('#markdownBtn').on("click", parseMarkdown);
+  if(tutorial){
+    document.getElementById("tutorialContent").innerHTML = await marked.parse(tutorial[0].content);
+    (document.getElementById("markdownText")as HTMLInputElement).value=tutorial[0].content;
+  }
+  $('#markdownBtn').on("click", update);
   $('#markdownText').on("keyup", parseMarkdown);
 
   try {
