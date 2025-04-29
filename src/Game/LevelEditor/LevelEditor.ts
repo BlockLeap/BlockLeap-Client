@@ -197,12 +197,14 @@ export default class LevelEditor extends Phaser.Scene {
       return;
     }
     // Combina el tablero actualizado con el JSON original del nivel
-    const levelJSON: Level.Level = {
+    let levelJSON: Level.Level;
+    if(this.loadedBlocklyWorkspace){levelJSON= {
       ...this.levelLoaded, // Mantén todas las propiedades originales del nivel
       phaser: updatedBoard.phaser, // Actualiza solo la parte del tablero
       blockly: this.loadedBlocklyWorkspace, // Mantén la información de Blockly
       // usedWorkspaceBlocks: BlocklyController.saveWorkspace() // Guarda el estado actual del workspace de Blockly
-  };
+    };
+    } else levelJSON=this.board.toJSON();
 
    // this.usedLoop = this.checkIfUsedLoop(this.loadedBlocklyWorkspace);
     

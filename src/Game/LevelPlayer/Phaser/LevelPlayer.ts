@@ -474,6 +474,10 @@ export default class LevelPlayer extends Phaser.Scene {
   }
 
   private loadLevelEditor = async () => {
+    if(this.fromLevelEditor){
+      const workspaceState = BlocklyController.saveWorkspace();
+      this.levelJSON.usedWorkspaceBlocks = workspaceState;
+    }
     await PhaserController.destroyGame();
     loadLevelEditor(this.levelJSON);
   }
@@ -799,7 +803,7 @@ export default class LevelPlayer extends Phaser.Scene {
 
     if (this.levelJSON.usedWorkspaceBlocks) {
       BlocklyController.loadWorkspaceBlocks(this.levelJSON.usedWorkspaceBlocks);
-  }
+    }
 
     // Obtener las opciones disponibles para buscar el texto correspondiente
     const collectedCh= this.totalCofres-this.numChests;
