@@ -55,7 +55,9 @@ function getStarsInfo(levelJSON: Level.Level, fromLevelEditor?: boolean) {
     }
     
     currentLevelJSON = levelJSON;
-    if (currentLevelJSON.firstStar.first === undefined && currentLevelJSON.secondStar.first === undefined && currentLevelJSON.thirdStar.first === undefined) {
+    console.log("EMPIEZA AQUI", currentLevelJSON);
+    if (currentLevelJSON.firstStar === undefined && currentLevelJSON.secondStar === undefined && currentLevelJSON.thirdStar === undefined) {
+        console.log("No hay estrellas para mostrar");
         return ''; // No hacer nada si no existen
     }
     return `<div style="position: absolute; top: 3%; right: 5%; margin-top: 60px; margin-right: 0px; background: #833c51; color: white; border: 2px solid #ffc107; border-radius: 10px; width: 150px; padding: 10px; font-size: 14px;">
@@ -224,7 +226,16 @@ export async function loadLevel(levelJSON: Level.Level, fromLevelEditor?: boolea
     const workspaceBlocks = currentLevelJSON.blockly.workspaceBlocks;
     PhaserController.init("LevelPlayer", LevelPlayer, { levelJSON, fromLevelEditor });
     BlocklyController.init(BLOCKLY_DIV_ID, toolbox, maxInstances, workspaceBlocks);
-    //document.getElementById("phaserDiv").innerHTML += starsInfoHTML;
+    //document.getElementById("phaserDiv").innerHTML += starsInfoHTML;      
+
+    if (fromLevelEditor && levelJSON.usedWorkspaceBlocks && levelJSON.usedWorkspaceBlocks.blocks ) {
+        try {
+            BlocklyController.loadWorkspaceBlocks(levelJSON.usedWorkspaceBlocks);
+            console.log("Workspace blocks loaded successfully in edit mode.");
+        } catch (error) {
+            console.error("Error loading workspace blocks in edit mode:", error);
+        }
+    }
 }
 
 export function restartCurrentLevel() {
