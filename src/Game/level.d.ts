@@ -11,6 +11,7 @@ declare namespace Level {
         secondStar: Pair;
         thirdStar: Pair;
         totalChests: number;
+        usedWorkspaceBlocks?: any; 
     }
     
     interface Pair{
@@ -64,6 +65,16 @@ declare namespace Level {
 
     interface MaxInstances {
         [blockType: string]: number
+    }
+
+    interface UsedWorkspaceBlocks {
+        id: string,
+        type: string,
+        fields?: {[key: string]: string | number},
+        connections: {[key: string]: string},
+        opts?: {
+            isDeletable?: boolean
+        }
     }
 
     interface WorkspaceBlock {

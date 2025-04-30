@@ -2669,28 +2669,33 @@ function ${b.FUNCTION_NAME_PLACEHOLDER_}(haystack, needle, replacement) {
 
 /* eslint-disable */
 
-(function (module, exports) {
+var hasRequiredJavascript;
+
+function requireJavascript () {
+	if (hasRequiredJavascript) return javascript.exports;
+	hasRequiredJavascript = 1;
+	(function (module, exports) {
 (function(root, factory) {
-	  { // Node.js
-	    module.exports = factory(requireCoreBrowser(), requireJavascript_compressed());
-	  }
-	}(commonjsGlobal, function(Blockly, BlocklyJavaScript) {
-	/**
-	 * @license
-	 * Copyright 2020 Google LLC
-	 * SPDX-License-Identifier: Apache-2.0
-	 */
+		  { // Node.js
+		    module.exports = factory(requireCoreBrowser(), requireJavascript_compressed());
+		  }
+		}(commonjsGlobal, function(Blockly, BlocklyJavaScript) {
+		/**
+		 * @license
+		 * Copyright 2020 Google LLC
+		 * SPDX-License-Identifier: Apache-2.0
+		 */
 
-	/**
-	 * @fileoverview JavaScript Generator module; just a wrapper for
-	 *     javascript_compressed.js.
-	 */
+		/**
+		 * @fileoverview JavaScript Generator module; just a wrapper for
+		 *     javascript_compressed.js.
+		 */
 
-	return BlocklyJavaScript;
-	})); 
-} (javascript));
-
-var javascriptExports = javascript.exports;
+		return BlocklyJavaScript;
+		})); 
+	} (javascript));
+	return javascript.exports;
+}
 
 /* eslint-disable */
 
@@ -2702,7 +2707,7 @@ function requireBrowser () {
 	(function (module, exports) {
 (function(root, factory) {
 		  { // Node.js
-		    module.exports = factory(requireCoreBrowser(), requireEn(), requireBlocks(), javascriptExports);
+		    module.exports = factory(requireCoreBrowser(), requireEn(), requireBlocks(), requireJavascript());
 		  }
 		}(commonjsGlobal, function(Blockly, En, BlocklyBlocks, BlocklyJS) {
 
@@ -2752,6 +2757,8 @@ var dist = {exports: {}};
 } (dist));
 
 var distExports = dist.exports;
+
+var javascriptExports = requireJavascript();
 
 function stringifyBlockCode(code) {
     const { eventName, data, times } = code;
@@ -252009,8 +252016,10 @@ class LevelEditor extends phaserExports.Scene {
     selectedIconId;
     board;
     brushPopover;
+    levelLoaded;
     loadedLevel;
     loadedBlocklyWorkspace;
+    loadedBlocklyWorkspaceBlocks;
     numRows;
     numCols;
     usedLoop = false;
@@ -252022,6 +252031,18 @@ class LevelEditor extends phaserExports.Scene {
         if (data.levelJSON) {
             this.loadedLevel = data.levelJSON.phaser;
             this.loadedBlocklyWorkspace = data.levelJSON.blockly;
+            // this.loadedBlocklyWorkspaceBlocks=data.levelJSON.usedWorkspaceBlocks;
+            this.levelLoaded = {
+                ...data.levelJSON,
+                LoopUsed: data.levelJSON.LoopUsed ?? false,
+                variableUsed: data.levelJSON.variableUsed ?? false,
+                MinBlocksUsed: data.levelJSON.MinBlocksUsed ?? 0,
+                firstStar: data.levelJSON.firstStar ?? { first: "", second: "" },
+                secondStar: data.levelJSON.secondStar ?? { first: "", second: "" },
+                thirdStar: data.levelJSON.thirdStar ?? { first: "", second: "" },
+                totalChests: data.levelJSON.totalChests ?? 0,
+                usedWorkspaceBlocks: data.levelJSON.usedWorkspaceBlocks ?? [],
+            };
         }
         if (this.loadedLevel) {
             this.numRows = this.loadedLevel.height;
@@ -252137,12 +252158,20 @@ class LevelEditor extends phaserExports.Scene {
         return { texture: data[0], frame: (data[1] === "undefined" ? undefined : data[1]) };
     }
     async saveLevel() {
-        let levelJSON = this.board.toJSON();
+        const updatedBoard = this.board.toJSON();
+        // let levelJSON = this.board.toJSON();
         // ver la solucion: si se lo pasa, si utiliza loop, num instrucciones utilizado en la solucion
-        if (levelJSON.phaser.layers.players.objects.length <= 0 || levelJSON.phaser.layers.objects.some(obj => obj.spriteSheet === "exit" && obj.objects.length <= 0)) {
+        if (updatedBoard.phaser.layers.players.objects.length <= 0 || updatedBoard.phaser.layers.objects.some(obj => obj.spriteSheet === "exit" && obj.objects.length <= 0)) {
             console.error("Does not have player or exit");
             return;
         }
+        // Combina el tablero actualizado con el JSON original del nivel
+        const levelJSON = {
+            ...this.levelLoaded,
+            phaser: updatedBoard.phaser,
+            blockly: this.loadedBlocklyWorkspace, // Mantén la información de Blockly
+            // usedWorkspaceBlocks: BlocklyController.saveWorkspace() // Guarda el estado actual del workspace de Blockly
+        };
         // this.usedLoop = this.checkIfUsedLoop(this.loadedBlocklyWorkspace);
         await PhaserController.destroyGame();
         loadLevel(levelJSON, true);
@@ -280770,20 +280799,6 @@ class LevelPlayer extends phaserExports.Scene {
             }
         }
     };
-    // private showVictoryModal(stars: number) {
-    //   const starContainer = document.querySelector('.stars');
-    //   starContainer.innerHTML = ''; // Limpiar el contenedor de estrellas
-    //   // Crear estrellas y actualizar su color según el número de estrellas ganadas
-    //   for (let i = 0; i < 3; i++) {
-    //     const star = document.createElement('i');
-    //     star.classList.add('bi', 'bi-star-fill', 'h2');
-    //     star.style.color = i < stars ? '#ffd700' : '#555555'; // Dorado si se ha ganado la estrella, gris si no
-    //     starContainer.appendChild(star);
-    //   }
-    //   // Mostrar el modal de victoria
-    //   const victoryModal = new bootstrap.Modal(document.getElementById('victoryModal'));
-    //   victoryModal.show();
-    // }
     changeAnimSpeed = (e) => {
         const val = parseInt(e.currentTarget.value);
         const newVal = (val % 3) + 1; // between 1 - 3
@@ -280823,7 +280838,6 @@ class LevelPlayer extends phaserExports.Scene {
         }
         await PhaserController.destroyGame();
         loadLevel(this.levelJSON, true);
-        console.log(JSON.stringify(this.levelJSON.blockly));
     };
     checkMaxBlockLimit = async (block) => {
         var check = document.getElementById(block + "NumberCheck");
@@ -280833,7 +280847,6 @@ class LevelPlayer extends phaserExports.Scene {
             (document.getElementById(block + "NumberLimit").value) = String(max);
             check.checked = true;
         }
-        console.log(JSON.stringify(this.levelJSON.blockly));
     };
     setBlockEnabled = async (block) => {
         var category = this.blockMap[block];
@@ -280858,7 +280871,6 @@ class LevelPlayer extends phaserExports.Scene {
         // stars = 1 + (!playerBounced && this.numChests === 0 ? 1 : 0) + 1; // TODO: minBlocks star
         await PhaserController.destroyGame();
         loadLevel(this.levelJSON, true);
-        console.log(JSON.stringify(toolboxContent));
     };
     checkBlockEnabled = async (block) => {
         var category = this.blockMap[block];
@@ -280878,7 +280890,6 @@ class LevelPlayer extends phaserExports.Scene {
         else {
             check.checked = true;
         }
-        console.log(JSON.stringify(toolboxContent));
     };
     setCategoryEnabled = async (category) => {
         var categoryDefinitions = { "Variables": { "kind": "category", "name": "Variables", "custom": "VARIABLE", "colour": "#a55b80" } };
@@ -280898,7 +280909,6 @@ class LevelPlayer extends phaserExports.Scene {
         }
         await PhaserController.destroyGame();
         loadLevel(this.levelJSON, true);
-        console.log(JSON.stringify(toolboxContent));
     };
     checkCategoryEnabled = async (category) => {
         var check = document.getElementById(category + "SwitchCheck");
@@ -280910,7 +280920,6 @@ class LevelPlayer extends phaserExports.Scene {
         }
         else
             check.checked = true;
-        console.log(JSON.stringify(toolboxContent));
     };
     updateTagOptions = (usedTags, loopUsed, variableUsed, blocksUsed, collectedChests) => {
         const options = [
@@ -280952,7 +280961,7 @@ class LevelPlayer extends phaserExports.Scene {
             select.value = currentValue || ""; // Mantener el valor seleccionado
         });
     };
-    getAppendCreateLevelModal(userId, canPublish) {
+    async getAppendCreateLevelModal(userId, canPublish) {
         let createModal = `
         <div id="levelCreateModal" class="modal fade" tabindex="-1" aria-labelledby="createLevelLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -281024,6 +281033,19 @@ class LevelPlayer extends phaserExports.Scene {
             createLevelModalElement.remove();
         });
         createLevelModalInstance.show();
+        // Obtener los datos del nivel desde la API
+        try {
+            const levelId = this.getLevelId();
+            if (levelId) {
+                const levelData = await fetchRequest(`${API_ENDPOINT$2}/classlevel/id/${levelId}`, "GET");
+                // Rellenar los campos del formulario con los datos obtenidos
+                document.getElementById("level_name").value = levelData.title || "";
+                document.getElementById("level_desc").value = levelData.description || "";
+            }
+        }
+        catch (error) {
+            console.error("Error al cargar los datos del nivel:", error);
+        }
         const collectedCh = this.totalCofres - this.numChests;
         this.updateTagOptions2(new Set(), // No hay tags usados inicialmente
         this.levelJSON.LoopUsed || false, this.levelJSON.variableUsed || false, this.levelJSON.MinBlocksUsed || 0, collectedCh || 0);
@@ -281049,6 +281071,30 @@ class LevelPlayer extends phaserExports.Scene {
                 const star1Tag = document.getElementById("star1Tag").value;
                 const star2Tag = document.getElementById("star2Tag").value;
                 const star3Tag = document.getElementById("star3Tag").value;
+                // Obtener los bloques usados del workspace, excluyendo el bloque "start"
+                //     const workspaceBlocks = this.blockyController.getAllBlocks()
+                //     map(block => ({
+                //       id: block.id, // ID único del bloque
+                //       type: block.type, // Tipo del bloque
+                //       fields: block.inputList.reduce((fields, input) => {
+                //           if (input.fieldRow) {
+                //               input.fieldRow.forEach(field => {
+                //                   fields[field.name] = field.getValue();
+                //               });
+                //           }
+                //           return fields;
+                //       }, {}), // Guardar los valores de los campos
+                //       connections: {
+                //           output: block.outputConnection?.targetBlock()?.id || null, // Conexión de salida
+                //           previous: block.previousConnection?.targetBlock()?.id || null // Conexión de entrada
+                //       }
+                //   }));
+                // this.levelJSON.usedWorkspaceBlocks = workspaceBlocks;
+                const workspaceState = BlocklyController.saveWorkspace();
+                this.levelJSON.usedWorkspaceBlocks = workspaceState;
+                if (this.levelJSON.usedWorkspaceBlocks) {
+                    BlocklyController.loadWorkspaceBlocks(this.levelJSON.usedWorkspaceBlocks);
+                }
                 // Obtener las opciones disponibles para buscar el texto correspondiente
                 const collectedCh = this.totalCofres - this.numChests;
                 const options = this.updateTagOptions(new Set(), // Puedes pasar los tags usados si es necesario
@@ -283952,7 +283998,9 @@ function getStarsInfo(levelJSON, fromLevelEditor) {
         return ''; // No mostrar nada si estamos en el editor
     }
     currentLevelJSON = levelJSON;
-    if (currentLevelJSON.firstStar.first === undefined && currentLevelJSON.secondStar.first === undefined && currentLevelJSON.thirdStar.first === undefined) {
+    console.log("EMPIEZA AQUI", currentLevelJSON);
+    if (currentLevelJSON.firstStar === undefined && currentLevelJSON.secondStar === undefined && currentLevelJSON.thirdStar === undefined) {
+        console.log("No hay estrellas para mostrar");
         return ''; // No hacer nada si no existen
     }
     return `<div style="position: absolute; top: 3%; right: 5%; margin-top: 60px; margin-right: 0px; background: #833c51; color: white; border: 2px solid #ffc107; border-radius: 10px; width: 150px; padding: 10px; font-size: 14px;">
@@ -284108,7 +284156,16 @@ async function loadLevel(levelJSON, fromLevelEditor, category) {
     const workspaceBlocks = currentLevelJSON.blockly.workspaceBlocks;
     PhaserController.init("LevelPlayer", LevelPlayer, { levelJSON, fromLevelEditor });
     BlocklyController.init(BLOCKLY_DIV_ID, toolbox, maxInstances, workspaceBlocks);
-    //document.getElementById("phaserDiv").innerHTML += starsInfoHTML;
+    //document.getElementById("phaserDiv").innerHTML += starsInfoHTML;      
+    if (fromLevelEditor && levelJSON.usedWorkspaceBlocks && levelJSON.usedWorkspaceBlocks.blocks) {
+        try {
+            BlocklyController.loadWorkspaceBlocks(levelJSON.usedWorkspaceBlocks);
+            console.log("Workspace blocks loaded successfully in edit mode.");
+        }
+        catch (error) {
+            console.error("Error loading workspace blocks in edit mode:", error);
+        }
+    }
 }
 function restartCurrentLevel() {
     PhaserController.init("LevelPlayer", LevelPlayer, { levelJSON: currentLevelJSON, fromLevelEditor: currentFromLevelEditor });
@@ -284207,7 +284264,10 @@ class BlocklyController {
         };
         window.addEventListener("resize", onresize, false);
         onresize();
-        blocklyExports.defineBlocksWithJsonArray(blocks);
+        // Verificar si los bloques ya están definidos
+        if (!blocklyExports.Blocks["start"]) {
+            blocklyExports.defineBlocksWithJsonArray(blocks);
+        }
         this.startBlock = this.workspace.newBlock("start", "start");
         this.startBlock.initSvg();
         this.startBlock.render();
@@ -284238,6 +284298,73 @@ class BlocklyController {
             this.code = this.generateCode();
             this.blockyxAPI(event);
         });
+    }
+    // Método para guardar el estado del workspace
+    static saveWorkspace() {
+        if (!BlocklyController.workspace) {
+            throw new Error("Workspace no inicializado.");
+        }
+        return blocklyExports.serialization.workspaces.save(BlocklyController.workspace);
+    }
+    // Método para cargar el estado del workspace
+    static loadWorkspaceBlocks(blocks) {
+        if (!BlocklyController.workspace) {
+            throw new Error("Workspace no inicializado.");
+        }
+        else {
+            console.log("Workspace initialized.");
+        }
+        // Limpiar el workspace actual
+        BlocklyController.workspace.clear();
+        // Validar la estructura de los bloques
+        if (!blocks || !blocks.blocks) {
+            console.error("Invalid workspace blocks:", blocks);
+            const startBlock = BlocklyController.workspace.newBlock("start");
+            startBlock.initSvg();
+            startBlock.render();
+            startBlock.moveBy(50, 50); // Posicionar el bloque "start"
+            return;
+        }
+        // Cargar el estado guardado del workspace
+        try {
+            blocklyExports.serialization.workspaces.load(blocks, BlocklyController.workspace);
+            console.log("Workspace loaded successfully.");
+        }
+        catch (error) {
+            console.error("Error loading workspace:", error);
+            return;
+        }
+        // Verificar si el bloque "start" existe, si no, crearlo
+        const startBlock = BlocklyController.workspace.getAllBlocks(false).find(block => block.type === "start");
+        if (!startBlock) {
+            console.warn("No start block found. Creating a new one.");
+            const newStartBlock = BlocklyController.workspace.newBlock("start");
+            newStartBlock.initSvg();
+            newStartBlock.render();
+            newStartBlock.moveBy(50, 50); // Posicionar el bloque "start"
+        }
+        if (startBlock && !startBlock.getNextBlock()) {
+            console.warn("Start block has no connected blocks.");
+        }
+        // Validar las conexiones entre bloques
+        console.log("Workspace blocks after load:", BlocklyController.workspace.getAllBlocks(false));
+        BlocklyController.workspace.getAllBlocks(false).forEach(block => {
+            console.log(`Block ${block.type} with ID ${block.id}`);
+            if (block.nextConnection && block.nextConnection.targetBlock()) {
+                console.log(`Block ${block.type} is connected to ${block.nextConnection.targetBlock().type}`);
+            }
+        });
+        // Inicializar changeData con el estado actual del workspace para que se actualice al principio
+        const allBlocks = BlocklyController.workspace.getAllBlocks(false);
+        if (allBlocks.length > 0) {
+            const firstBlock = allBlocks[0];
+            BlocklyController.changeData = {
+                blockId: firstBlock.id,
+                name: null,
+                newValue: null
+            };
+            console.log("Initialized changeData with the first block in workspace:", BlocklyController.changeData);
+        }
     }
     static blockyxAPI(event) {
         if (event.type === "create") {
@@ -284305,6 +284432,10 @@ class BlocklyController {
         let prepBlocks = this.workspace.getAllBlocks(true);
         //cantidad de bloques utilizados se guarda en numBlockUsed para guardarlo en el json del nivel 
         this.numBlocksUsed = prepBlocks.length;
+        if (!this.changeData) {
+            console.warn("changeData is empty. Initializing with default values.");
+            this.changeData = { blockId: null, newValue: null, name: null };
+        }
         for (let block of prepBlocks) {
             //se ha usado algun bucle loop
             if (block.type === "for_X_times") {
@@ -284315,7 +284446,10 @@ class BlocklyController {
                 this.variableUsed = true;
             }
             if (this.changeData) {
-                this.workspace.getBlockById(this.changeData.blockId).setFieldValue(this.changeData.newValue, this.changeData.name);
+                const blockToUpdate = this.workspace.getBlockById(this.changeData.blockId);
+                if (blockToUpdate) {
+                    blockToUpdate.setFieldValue(this.changeData.newValue, this.changeData.name);
+                }
                 this.changeData = null;
                 this.code = this.generateCode();
             }

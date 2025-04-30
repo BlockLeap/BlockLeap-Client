@@ -6,6 +6,7 @@ import PhaserController from "../PhaserController";
 import Level from "../level";
 import config from '../config';
 import blocks from "../LevelPlayer/Blockly/Blocks/blocks";
+import BlocklyController from "../LevelPlayer/Blockly/BlocklyController";
 
 // TODO: eliminar magic numbers
 const MIN_ZOOM = 0.5;
@@ -17,8 +18,10 @@ export default class LevelEditor extends Phaser.Scene {
   selectedIconId: string;
   board: Board;
   brushPopover: bootstrap.Popover;
+  levelLoaded: Level.Level;
   loadedLevel: Level.Phaser;
   loadedBlocklyWorkspace: Level.Blockly;
+  loadedBlocklyWorkspaceBlocks: Level.UsedWorkspaceBlocks[];
   numRows: number;
   numCols: number;
   usedLoop: boolean = false;
@@ -30,8 +33,20 @@ export default class LevelEditor extends Phaser.Scene {
   // TODO: pasar nivel y cargarlo
   init(data?: { levelJSON: Level.Level }): void {
     if(data.levelJSON){
-    this.loadedLevel = data.levelJSON.phaser;
-    this.loadedBlocklyWorkspace=data.levelJSON.blockly;
+      this.loadedLevel = data.levelJSON.phaser;
+      this.loadedBlocklyWorkspace=data.levelJSON.blockly;
+      // this.loadedBlocklyWorkspaceBlocks=data.levelJSON.usedWorkspaceBlocks;
+      this.levelLoaded = {
+        ...data.levelJSON,
+        LoopUsed: data.levelJSON.LoopUsed ?? false,
+        variableUsed: data.levelJSON.variableUsed ?? false,
+        MinBlocksUsed: data.levelJSON.MinBlocksUsed ?? 0,
+        firstStar: data.levelJSON.firstStar ?? { first: "", second: "" },
+        secondStar: data.levelJSON.secondStar ?? { first: "", second: "" },
+        thirdStar: data.levelJSON.thirdStar ?? { first: "", second: "" },
+        totalChests: data.levelJSON.totalChests ?? 0,
+        usedWorkspaceBlocks: data.levelJSON.usedWorkspaceBlocks ?? [],
+    };
     }
     if (this.loadedLevel) {
       this.numRows = this.loadedLevel.height;
@@ -173,13 +188,23 @@ export default class LevelEditor extends Phaser.Scene {
   }
 
   async saveLevel() {
-    let levelJSON = this.board.toJSON();
+    const updatedBoard = this.board.toJSON();
+    // let levelJSON = this.board.toJSON();
     
     // ver la solucion: si se lo pasa, si utiliza loop, num instrucciones utilizado en la solucion
-    if (levelJSON.phaser.layers.players.objects.length <= 0 || levelJSON.phaser.layers.objects.some(obj => obj.spriteSheet === "exit" && obj.objects.length <= 0)) {
+    if (updatedBoard.phaser.layers.players.objects.length <= 0 || updatedBoard.phaser.layers.objects.some(obj => obj.spriteSheet === "exit" && obj.objects.length <= 0)) {
       console.error("Does not have player or exit");
       return;
     }
+    // Combina el tablero actualizado con el JSON original del nivel
+    let levelJSON: Level.Level;
+    if(this.loadedBlocklyWorkspace){levelJSON= {
+      ...this.levelLoaded, // Mantén todas las propiedades originales del nivel
+      phaser: updatedBoard.phaser, // Actualiza solo la parte del tablero
+      blockly: this.loadedBlocklyWorkspace, // Mantén la información de Blockly
+      // usedWorkspaceBlocks: BlocklyController.saveWorkspace() // Guarda el estado actual del workspace de Blockly
+    };
+    } else levelJSON=this.board.toJSON();
 
    // this.usedLoop = this.checkIfUsedLoop(this.loadedBlocklyWorkspace);
     

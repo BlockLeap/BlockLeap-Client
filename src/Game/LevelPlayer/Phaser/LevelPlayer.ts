@@ -458,23 +458,7 @@ export default class LevelPlayer extends Phaser.Scene {
     }
   };
   }
-  
-  // private showVictoryModal(stars: number) {
-  //   const starContainer = document.querySelector('.stars');
-  //   starContainer.innerHTML = ''; // Limpiar el contenedor de estrellas
-  
-  //   // Crear estrellas y actualizar su color según el número de estrellas ganadas
-  //   for (let i = 0; i < 3; i++) {
-  //     const star = document.createElement('i');
-  //     star.classList.add('bi', 'bi-star-fill', 'h2');
-  //     star.style.color = i < stars ? '#ffd700' : '#555555'; // Dorado si se ha ganado la estrella, gris si no
-  //     starContainer.appendChild(star);
-  //   }
-  
-  //   // Mostrar el modal de victoria
-  //   const victoryModal = new bootstrap.Modal(document.getElementById('victoryModal'));
-  //   victoryModal.show();
-  // }
+
   
   private changeAnimSpeed = (e: Event) => {
     const val = parseInt((e.currentTarget as HTMLInputElement).value);
@@ -490,6 +474,10 @@ export default class LevelPlayer extends Phaser.Scene {
   }
 
   private loadLevelEditor = async () => {
+    if(this.fromLevelEditor){
+      const workspaceState = BlocklyController.saveWorkspace();
+      this.levelJSON.usedWorkspaceBlocks = workspaceState;
+    }
     await PhaserController.destroyGame();
     loadLevelEditor(this.levelJSON);
   }
@@ -520,7 +508,6 @@ export default class LevelPlayer extends Phaser.Scene {
     await PhaserController.destroyGame();
     loadLevel(this.levelJSON,true);
 
-    console.log(JSON.stringify(this.levelJSON.blockly));
   }
 
   private checkMaxBlockLimit =async(block: string)=> {
@@ -532,7 +519,6 @@ export default class LevelPlayer extends Phaser.Scene {
       ((document.getElementById(block+"NumberLimit") as HTMLInputElement).value)=String(max);
       check.checked=true;
     }
-    console.log(JSON.stringify(this.levelJSON.blockly));
   }
 
   private setBlockEnabled= async(block: string)=> {
@@ -557,7 +543,6 @@ export default class LevelPlayer extends Phaser.Scene {
     await PhaserController.destroyGame();
     loadLevel(this.levelJSON,true);
 
-    console.log(JSON.stringify(toolboxContent));
   }
 
   private checkBlockEnabled= async(block: string)=> {
@@ -579,7 +564,6 @@ export default class LevelPlayer extends Phaser.Scene {
       check.checked=true;
     } 
     
-    console.log(JSON.stringify(toolboxContent));
   }
 
   private setCategoryEnabled= async(category: string)=> {
@@ -602,7 +586,6 @@ export default class LevelPlayer extends Phaser.Scene {
     await PhaserController.destroyGame();
     loadLevel(this.levelJSON,true);
 
-    console.log(JSON.stringify(toolboxContent));
   }
 
   private checkCategoryEnabled= async(category: string)=> {
@@ -615,7 +598,6 @@ export default class LevelPlayer extends Phaser.Scene {
       document.getElementById(category+"LimitForm").hidden=true;
     }else check.checked=true;
 
-    console.log(JSON.stringify(toolboxContent));
   }
 
   
@@ -664,7 +646,7 @@ export default class LevelPlayer extends Phaser.Scene {
     });
   }
 
-  private getAppendCreateLevelModal(userId,canPublish){
+  private async getAppendCreateLevelModal(userId,canPublish){
     let createModal= `
         <div id="levelCreateModal" class="modal fade" tabindex="-1" aria-labelledby="createLevelLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -738,6 +720,20 @@ export default class LevelPlayer extends Phaser.Scene {
             createLevelModalElement.remove();
         });
         createLevelModalInstance.show();
+
+        // Obtener los datos del nivel desde la API
+    try {
+      const levelId = this.getLevelId();
+      if (levelId) {
+          const levelData = await fetchRequest(`${API_ENDPOINT}/classlevel/id/${levelId}`, "GET");
+
+          // Rellenar los campos del formulario con los datos obtenidos
+          (document.getElementById("level_name") as HTMLInputElement).value = levelData.title || "";
+          (document.getElementById("level_desc") as HTMLTextAreaElement).value = levelData.description || "";
+      }
+  } catch (error) {
+      console.error("Error al cargar los datos del nivel:", error);
+  }
         const collectedCh= this.totalCofres-this.numChests;
         this.updateTagOptions2(
           new Set<string>(), // No hay tags usados inicialmente
@@ -781,6 +777,34 @@ export default class LevelPlayer extends Phaser.Scene {
     const star2Tag = (document.getElementById("star2Tag") as HTMLSelectElement).value;
     const star3Tag = (document.getElementById("star3Tag") as HTMLSelectElement).value;
 
+    // Obtener los bloques usados del workspace, excluyendo el bloque "start"
+ 
+//     const workspaceBlocks = this.blockyController.getAllBlocks()
+//     map(block => ({
+//       id: block.id, // ID único del bloque
+//       type: block.type, // Tipo del bloque
+//       fields: block.inputList.reduce((fields, input) => {
+//           if (input.fieldRow) {
+//               input.fieldRow.forEach(field => {
+//                   fields[field.name] = field.getValue();
+//               });
+//           }
+//           return fields;
+//       }, {}), // Guardar los valores de los campos
+//       connections: {
+//           output: block.outputConnection?.targetBlock()?.id || null, // Conexión de salida
+//           previous: block.previousConnection?.targetBlock()?.id || null // Conexión de entrada
+//       }
+//   }));
+// this.levelJSON.usedWorkspaceBlocks = workspaceBlocks;
+
+    const workspaceState = BlocklyController.saveWorkspace();
+    this.levelJSON.usedWorkspaceBlocks = workspaceState;
+
+    if (this.levelJSON.usedWorkspaceBlocks) {
+      BlocklyController.loadWorkspaceBlocks(this.levelJSON.usedWorkspaceBlocks);
+    }
+
     // Obtener las opciones disponibles para buscar el texto correspondiente
     const collectedCh= this.totalCofres-this.numChests;
     const options = this.updateTagOptions(
@@ -806,6 +830,7 @@ export default class LevelPlayer extends Phaser.Scene {
         first: star3Tag || "",
         second: options.find(option => option.value === star3Tag)?.text || ""
     };
+          
           // Preguntar al usuario el nombre del nivel
           const levelName = (document.getElementById("level_name") as HTMLInputElement).value;
           const levelDescription= (document.getElementById("level_desc") as HTMLInputElement).value;
@@ -862,7 +887,7 @@ export default class LevelPlayer extends Phaser.Scene {
         validateStars();
   }
 
-  saveLevel=async ()=>{
+  saveLevel=async ()=> {
     let cookie=sessionCookieValue();
     this.getAppendCreateLevelModal(cookie.id,false);
   }

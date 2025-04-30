@@ -224,7 +224,16 @@ export async function loadLevel(levelJSON: Level.Level, fromLevelEditor?: boolea
     const workspaceBlocks = currentLevelJSON.blockly.workspaceBlocks;
     PhaserController.init("LevelPlayer", LevelPlayer, { levelJSON, fromLevelEditor });
     BlocklyController.init(BLOCKLY_DIV_ID, toolbox, maxInstances, workspaceBlocks);
-    //document.getElementById("phaserDiv").innerHTML += starsInfoHTML;
+    //document.getElementById("phaserDiv").innerHTML += starsInfoHTML;      
+
+    if (fromLevelEditor && levelJSON.usedWorkspaceBlocks && levelJSON.usedWorkspaceBlocks.blocks ) {
+        try {
+            BlocklyController.loadWorkspaceBlocks(levelJSON.usedWorkspaceBlocks);
+            console.log("Workspace blocks loaded successfully in edit mode.");
+        } catch (error) {
+            console.error("Error loading workspace blocks in edit mode:", error);
+        }
+    }
 }
 
 export function restartCurrentLevel() {
