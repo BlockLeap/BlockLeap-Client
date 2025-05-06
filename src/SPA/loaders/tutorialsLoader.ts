@@ -3,6 +3,7 @@ import config from "../../Game/config.js";
 import { fetchRequest, fillContent } from "../utils";
 import GettingStarted  from "./tutoriaslLoaders/GettingStartedTutorialLoader";
 import CreateLevelsLoader from "./tutoriaslLoaders/CreateLevelsTutorialLoader";
+import DynamicTutorialLoader from "./tutoriaslLoaders/DynamicTutorialLoader";
 import HowtoPlay from "./tutoriaslLoaders/howToPlayTutorialLoader";
 import classroomsTutorialLoader from "./tutoriaslLoaders/ClassroomsTutorialLoader"
 import CommunityTutorial from "./tutoriaslLoaders/CommunityTutorialLoader";
@@ -21,7 +22,7 @@ function getRowHTML() {
 
 
         <div class="container">
-            <div class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="row row-cols-1 row-cols-md-3 g-4" id="tutorialDiv">
                 <div class="col">
                     <div class="card h-100 tutorial-card" id="gettingStarted">
                         <div class="card-body text-center">
@@ -82,14 +83,26 @@ function getRowHTML() {
         </div>
     `;
 }
-
+async function generateTutorialDiv(tutorial){
+    return `<div class="col">
+                    <div class="card h-100 tutorial-card" id="${tutorial.name}tutorial">
+                        <div class="card-body text-center">
+                            <i class="bi ${tutorial.icon} h1"></i>
+                            <h5 class="card-title">${tutorial.name}</h5>
+                            <p class="card-text">${tutorial.description}</p>
+                        </div>
+                    </div>
+            </div>`
+}
 
 export default async function loadTutorials() {
   document.getElementById("content").innerHTML = getRowHTML();
-  const divElement = document.getElementById("categories");
-
+  const divElement = document.getElementById("tutorialDiv");
+    const tutorial = await fetchRequest(`${API_ENDPOINT}/tutorial/getAll`, "GET");
+    await fillContent(divElement,tutorial,generateTutorialDiv)
+    console.log(tutorial);
   try {
-    document.getElementById("gettingStarted")?.addEventListener("click", (e) => {
+    /* document.getElementById("gettingStarted")?.addEventListener("click", (e) => {
         GettingStarted();
     });
     document.getElementById("createLevels")?.addEventListener("click", (e) => {
@@ -107,8 +120,12 @@ export default async function loadTutorials() {
     });
     document.getElementById("Profiletutorial")?.addEventListener("click", (e) => {
         profileTutorial();
+    }); */
+    tutorial.forEach(element => {
+        document.getElementById(element.name+"tutorial")?.addEventListener("click", (e) => {
+            DynamicTutorialLoader(element.name);
+        });
     });
-    
 
   } catch(error) {
     if (error.status === 503) { // Offline mode
