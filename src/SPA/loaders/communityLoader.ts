@@ -4,15 +4,33 @@ import { fetchRequest, fillContent } from "../utils";
 import { sessionCookieValue } from "./profileLoader";
 
 const API_ENDPOINT = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.API_PORT}/api`;
-
+const itemsPerPage=6;
 /**
  *
  * @returns String of HTMLDivElement for showing levels/categories
  */
 function getRowHTML() {
-  return '<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>';
+  return `<div class="container">
+            <div id="selectDiv" class="mt-3 p-1">
+              <select id="levelSelect" name="tags[]" multiple="multiple" style="width: 100%">
+                <option value="LP">Loops</option>
+                <option value="VR">Variable</option>
+                <option value="BS">Basic</option>
+              </select>
+            </div>
+            <div class="mt-3">
+              <button class="btn btn-primary w-100 px-5" type="button" id="filterButton"><i class="bi bi-search"></i> Search
+              </button>
+            </div>
+            </div>
+          <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
+          <div id="pageDiv" class="d-flex justify-content-center mt-3">
+            <nav aria-label="pages">
+              <ul class="pagination pagination-lg" id="paginationList">
+              </ul>
+            </nav>
+          </div>`;
 }
-
 /**
  *
  * @returns String of HTMLDivElement of a category placeholder
@@ -45,6 +63,34 @@ function generateCommunityDivPlaceholder() {
                   </div>
               </div>
           </div>`;
+}
+ async function loadLevelStats(levels){
+  const cookie = sessionCookieValue();
+
+  let statistics = [];
+  if (cookie !== null) {
+    statistics = await fetchRequest(
+      `${API_ENDPOINT}/play/communityStatistics?user=${cookie.id}/`,
+      "GET"
+    );
+  }
+  const statisticsMap = statistics.reduce((map, statistic) => {
+    map[statistic.level] = {
+      stars: statistic.stars,
+      attempts: statistic.attempts,
+    };
+    return map;
+  }, {});
+
+  const levelsWithStatistics = levels.map((level) => {
+    const levelId = level.id;
+    const statistic = statisticsMap[levelId];
+    return {
+      ...level,
+      statistics: statistic || { stars: 0, attempts: 0 },
+    };
+  });
+  return levelsWithStatistics;
 }
 
 /**
@@ -96,6 +142,51 @@ async function generateLevelDiv(level) {
     </div>`;
 }
 
+
+async function loadPagination(event) {
+  event.preventDefault();
+  const anchorTag = event.target.closest("a.getPage");   
+  const page = anchorTag.href.split("level/community/levels/")[1];
+  history.pushState({page}, "", `community?page=${page}`);
+  loadLevels(page);
+}
+
+async function loadPageNav(pages,currentPage){
+  const list= document.getElementById("paginationList");
+  let items='';
+  for(let i=1; i<=pages;i++){
+    if(i==currentPage)
+      items+=`<li class="page-item"><a class="page-link active getPage" href="${API_ENDPOINT}/level/community/levels/${i}">${i}</a></li>`
+    else
+      items+=`<li class="page-item"><a class="page-link getPage" href="${API_ENDPOINT}/level/community/levels/${i}">${i}</a></li>`
+  }
+  list.innerHTML=items;
+}
+async function filterSearch(){
+  loadLevels(1);
+}
+async function loadLevels(page){
+  const divElement = document.getElementById("categories");
+  const selectData=$('#levelSelect').select2('data');
+  const map=selectData.map(i=>i.text);
+  let data={page:page,tags:map};
+    const res = await fetchRequest(
+      `${API_ENDPOINT}/level/community/levels/${JSON.stringify(data)}`,
+      "GET"
+    );
+    const levels= res.rows;
+    const levelsWithStatistics = await loadLevelStats(levels);
+    let totalPages=(res.count/itemsPerPage);if((res.count%itemsPerPage)!=0)totalPages++;
+    await fillContent(divElement, levelsWithStatistics, generateLevelDiv);
+    loadPageNav(totalPages,page);
+    // Add getLevel event listener
+    document.querySelectorAll("a.getLevel").forEach((level) => {
+      level.addEventListener("click", playLevel);
+    });
+    document.querySelectorAll("a.getPage").forEach((page) => {
+      page.addEventListener("click", loadPagination);
+    });
+}
 /**
  * Sets content and starts phaser LevelPlayer
  * @param {Event} event - click event of <a> to href with level id
@@ -104,60 +195,26 @@ export async function playLevel(event) {
   event.preventDefault();
   const anchorTag = event.target.closest("a.getLevel");
   const id = anchorTag.href.split("level/")[1];
-  history.pushState({ id }, "", `level?id=${id}`);
+  history.pushState({ id }, "", `classLevel?id=${id}`);
 
   route();
 }
-
-export default async function loadCommunity() {
+export default async function loadCommunity(page='1') {
   document.getElementById("content").innerHTML = getRowHTML();
   const divElement = document.getElementById("categories");
 
   // Load placeholders
   await fillContent(divElement, new Array(10), generateCommunityDivPlaceholder);
-
+  $('#levelSelect').select2({placeholder:"Filter by tags",allowClear:true});
+  $('#filterButton').on("click",filterSearch);
   try {
-    const levels = await fetchRequest(
-      `${API_ENDPOINT}/level/community/levels`,
-      "GET"
-    );
-
-    const cookie = sessionCookieValue();
-
-    let statistics = [];
-    if (cookie !== null) {
-      statistics = await fetchRequest(
-        `${API_ENDPOINT}/play/communityStatistics?user=${cookie.id}/`,
-        "GET"
-      );
-    }
-    const statisticsMap = statistics.reduce((map, statistic) => {
-      map[statistic.level] = {
-        stars: statistic.stars,
-        attempts: statistic.attempts,
-      };
-      return map;
-    }, {});
-
-    const levelsWithStatistics = levels.map((level) => {
-      const levelId = level.id;
-      const statistic = statisticsMap[levelId];
-      return {
-        ...level,
-        statistics: statistic || { stars: 0, attempts: 0 },
-      };
-    });
-
-    await fillContent(divElement, levelsWithStatistics, generateLevelDiv);
-
-    // Add getLevel event listener
-    document.querySelectorAll("a.getLevel").forEach((level) => {
-      level.addEventListener("click", playLevel);
-    });
+    loadLevels(page);
   } catch(error) {
     if (error.status === 503) { // Offline mode
       console.log("Received a 503 web error");
       window.location.reload();
     }
   }
+  
+
 }

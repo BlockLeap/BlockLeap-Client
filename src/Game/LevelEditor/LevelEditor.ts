@@ -5,6 +5,8 @@ import { loadLevel } from "../../SPA/loaders/levelPlayerLoader";
 import PhaserController from "../PhaserController";
 import Level from "../level";
 import config from '../config';
+import blocks from "../LevelPlayer/Blockly/Blocks/blocks";
+import BlocklyController from "../LevelPlayer/Blockly/BlocklyController";
 
 // TODO: eliminar magic numbers
 const MIN_ZOOM = 0.5;
@@ -16,17 +18,36 @@ export default class LevelEditor extends Phaser.Scene {
   selectedIconId: string;
   board: Board;
   brushPopover: bootstrap.Popover;
+  levelLoaded: Level.Level;
   loadedLevel: Level.Phaser;
+  loadedBlocklyWorkspace: Level.Blockly;
+  loadedBlocklyWorkspaceBlocks: Level.UsedWorkspaceBlocks[];
   numRows: number;
   numCols: number;
+  usedLoop: boolean = false;
 
   constructor() {
     super("LevelEditor");
   }
 
   // TODO: pasar nivel y cargarlo
-  init(data: { levelJSON: Level.Phaser }): void {
-    this.loadedLevel = data.levelJSON;
+  init(data?: { levelJSON: Level.Level }): void {
+    if(data.levelJSON){
+      this.loadedLevel = data.levelJSON.phaser;
+      this.loadedBlocklyWorkspace=data.levelJSON.blockly;
+      // this.loadedBlocklyWorkspaceBlocks=data.levelJSON.usedWorkspaceBlocks;
+      this.levelLoaded = {
+        ...data.levelJSON,
+        LoopUsed: data.levelJSON.LoopUsed ?? false,
+        variableUsed: data.levelJSON.variableUsed ?? false,
+        MinBlocksUsed: data.levelJSON.MinBlocksUsed ?? 0,
+        firstStar: data.levelJSON.firstStar ?? { first: "", second: "" },
+        secondStar: data.levelJSON.secondStar ?? { first: "", second: "" },
+        thirdStar: data.levelJSON.thirdStar ?? { first: "", second: "" },
+        totalChests: data.levelJSON.totalChests ?? 0,
+        usedWorkspaceBlocks: data.levelJSON.usedWorkspaceBlocks ?? [],
+    };
+    }
     if (this.loadedLevel) {
       this.numRows = this.loadedLevel.height;
       this.numCols = this.loadedLevel.width;
@@ -77,7 +98,7 @@ export default class LevelEditor extends Phaser.Scene {
     this.events.on('shutdown', this.shutdown, this);
     this.events.on('destroy', this.shutdown, this);
 
-    this.board = new Board(this, this.numRows, this.numCols, this.loadedLevel?.layers);
+    this.board = new Board(this, this.numRows, this.numCols, this.loadedLevel?.layers,this.loadedBlocklyWorkspace);
 
     const paintbrushPopoverTrigger = document.getElementById("paintbrushContent");
     this.brushPopover = new bootstrap.Popover(paintbrushPopoverTrigger);
@@ -167,16 +188,35 @@ export default class LevelEditor extends Phaser.Scene {
   }
 
   async saveLevel() {
-    let levelJSON = this.board.toJSON();
-    if (levelJSON.phaser.layers.players.objects.length <= 0 || levelJSON.phaser.layers.objects.some(obj => obj.spriteSheet === "exit" && obj.objects.length <= 0)) {
+    const updatedBoard = this.board.toJSON();
+    // let levelJSON = this.board.toJSON();
+    
+    // ver la solucion: si se lo pasa, si utiliza loop, num instrucciones utilizado en la solucion
+    if (updatedBoard.phaser.layers.players.objects.length <= 0 || updatedBoard.phaser.layers.objects.some(obj => obj.spriteSheet === "exit" && obj.objects.length <= 0)) {
       console.error("Does not have player or exit");
       return;
     }
+    // Combina el tablero actualizado con el JSON original del nivel
+    let levelJSON: Level.Level;
+    if(this.loadedBlocklyWorkspace){levelJSON= {
+      ...this.levelLoaded, // Mantén todas las propiedades originales del nivel
+      phaser: updatedBoard.phaser, // Actualiza solo la parte del tablero
+      blockly: this.loadedBlocklyWorkspace, // Mantén la información de Blockly
+      // usedWorkspaceBlocks: BlocklyController.saveWorkspace() // Guarda el estado actual del workspace de Blockly
+    };
+    } else levelJSON=this.board.toJSON();
 
+   // this.usedLoop = this.checkIfUsedLoop(this.loadedBlocklyWorkspace);
+    
     await PhaserController.destroyGame();
     loadLevel(levelJSON, true);
   }
 
+  // private checkIfUsedLoop(workspace: Level.Blockly): boolean {
+  //   if (!workspace) return false;
+  //   const loopBlocks = ["controls_repeat_ext", "controls_whileUntil", "controls_for", "controls_forEach"];
+  //   return workspace.workspaceBlocks.some(block => loopBlocks.includes(blocks));
+  // }
   cameraMove(pointer) {
     if (!pointer.isDown) return;
 

@@ -19,6 +19,10 @@ import { Statement } from "@xapi/xapi";
 const BLOCK_OFFSET = 50;
 
 export default class BlocklyController {
+ 
+  private static usedLoop: boolean = false;
+  private static numBlocksUsed: number = 0;
+  private static variableUsed: boolean = false;
   private static startBlock: Blockly.BlockSvg;
   private static workspace: Blockly.WorkspaceSvg;
   private static code: BlockCode[];
@@ -51,6 +55,7 @@ export default class BlocklyController {
   }
 
   private static createWorkspace(container: string | Element, toolbox?: string | ToolboxDefinition | Element, maxInstances?: Level.MaxInstances, workspaceBlocks?: Level.WorkspaceBlock[]) {
+    
     BlocklyController.workspace = Blockly.inject(container, { toolbox, maxInstances, zoom: { controls: true, wheel: true, startScale: 1.0, maxScale: 3, minScale: 0.3, scaleSpeed: 1.2, pinch: true, }, });
     this.idsMap.clear();
 
@@ -69,7 +74,10 @@ export default class BlocklyController {
     window.addEventListener("resize", onresize, false);
     onresize();
 
-    Blockly.defineBlocksWithJsonArray(blocks);
+     // Verificar si los bloques ya están definidos
+     if (!Blockly.Blocks["start"]) {
+      Blockly.defineBlocksWithJsonArray(blocks);
+  }
 
     this.startBlock = this.workspace.newBlock("start", "start");
     this.startBlock.initSvg();
@@ -106,6 +114,72 @@ export default class BlocklyController {
       this.blockyxAPI(event);
     });
   }
+
+  // Método para guardar el estado del workspace
+  static saveWorkspace(): any {
+    if (!BlocklyController.workspace) {
+        throw new Error("Workspace no inicializado.");
+    }
+    return Blockly.serialization.workspaces.save(BlocklyController.workspace);
+  }
+
+ // Método para cargar el estado del workspace
+ static loadWorkspaceBlocks(blocks: any): void {
+  if (!BlocklyController.workspace) {
+    throw new Error("Workspace no inicializado.");
+}
+else{console.log("Workspace initialized.")}
+  // Limpiar el workspace actual
+  BlocklyController.workspace.clear();
+ // Validar la estructura de los bloques
+ if (!blocks || !blocks.blocks) {
+  console.error("Invalid workspace blocks:", blocks);
+  const startBlock = BlocklyController.workspace.newBlock("start");
+  startBlock.initSvg();
+  startBlock.render();
+  startBlock.moveBy(50, 50); // Posicionar el bloque "start"
+  return;
+}
+  // Cargar el estado guardado del workspace
+  try {
+    Blockly.serialization.workspaces.load(blocks, BlocklyController.workspace);
+    console.log("Workspace loaded successfully.");
+} catch (error) {
+    console.error("Error loading workspace:", error);
+    return
+}
+  // Verificar si el bloque "start" existe, si no, crearlo
+  const startBlock = BlocklyController.workspace.getAllBlocks(false).find(block => block.type === "start");
+  if (!startBlock) {
+    console.warn("No start block found. Creating a new one.");
+      const newStartBlock = BlocklyController.workspace.newBlock("start");
+      newStartBlock.initSvg();
+      newStartBlock.render();
+      newStartBlock.moveBy(50, 50); // Posicionar el bloque "start"
+  }
+  if (startBlock && !startBlock.getNextBlock()) {
+    console.warn("Start block has no connected blocks.");
+  }
+   // Validar las conexiones entre bloques
+   console.log("Workspace blocks after load:", BlocklyController.workspace.getAllBlocks(false));
+   BlocklyController.workspace.getAllBlocks(false).forEach(block => {
+    console.log(`Block ${block.type} with ID ${block.id}`);
+    if (block.nextConnection && block.nextConnection.targetBlock()) {
+        console.log(`Block ${block.type} is connected to ${block.nextConnection.targetBlock().type}`);
+    }
+});
+  // Inicializar changeData con el estado actual del workspace para que se actualice al principio
+  const allBlocks = BlocklyController.workspace.getAllBlocks(false);
+  if (allBlocks.length > 0) {
+    const firstBlock = allBlocks[0];
+    BlocklyController.changeData = {
+      blockId: firstBlock.id,
+      name: null,
+      newValue: null
+    };
+    console.log("Initialized changeData with the first block in workspace:", BlocklyController.changeData);
+  }
+}
 
   private static blockyxAPI(event: Blockly.Events.BlockBase){
     if(event.type === "create"){
@@ -175,9 +249,28 @@ export default class BlocklyController {
     e.stopPropagation();
     //this.workspace.getAllBlocks(true)[0].select();
       let prepBlocks = this.workspace.getAllBlocks(true);
+     //cantidad de bloques utilizados se guarda en numBlockUsed para guardarlo en el json del nivel 
+      this.numBlocksUsed = prepBlocks.length;
+
+      if (!this.changeData) {
+        console.warn("changeData is empty. Initializing with default values.");
+        this.changeData = { blockId: null, newValue: null, name: null };
+      }
+
       for (let block of prepBlocks) {
+        //se ha usado algun bucle loop
+        if(block.type === "for_X_times"){
+          this.usedLoop = true;
+        }
+        // Comprobar si se ha usado algún bloque de tipo "variable"
+        if (block.type === "variables_set") {
+          this.variableUsed = true;
+        }
         if (this.changeData) {
-          this.workspace.getBlockById(this.changeData.blockId).setFieldValue(this.changeData.newValue, this.changeData.name);
+          const blockToUpdate = this.workspace.getBlockById(this.changeData.blockId);
+          if (blockToUpdate) {
+              blockToUpdate.setFieldValue(this.changeData.newValue, this.changeData.name);
+          }          
           this.changeData = null;
           this.code = this.generateCode();
         }
@@ -256,4 +349,16 @@ export default class BlocklyController {
       BlocklyController.workspace = undefined;
     }
   }
-}
+
+  public getUsedLoop(): boolean {
+    return BlocklyController.usedLoop;  
+  }
+  
+  public getUsedBlocks(): number {
+    return BlocklyController.numBlocksUsed;
+    }
+
+  public getUsedVariable(): boolean {
+    return BlocklyController.variableUsed;
+  }
+ }

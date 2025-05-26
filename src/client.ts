@@ -10,6 +10,8 @@ import registerModals from './SPA/modals';
 import router from './SPA/router';
 import XAPISingleton from './xAPI/xapi';
 import TourController from './SPA/webtour/TourController';
+import { FlyoutMetricsManager } from 'blockly';
+
 
 export async function route() {
   // Always destroy phaser game
@@ -18,7 +20,10 @@ export async function route() {
 
   const url = new URL(window.location.href);
   const setPageFunction = router[url.pathname];
+  document.querySelector("#navbarCollapse .nav-link.active")?.classList.remove("active");
 
+
+  console.log(url.pathname);
   if (setPageFunction) {
     setPageFunction(url.searchParams);
   } else {
@@ -46,7 +51,10 @@ function setNavbarListeners() {
     routeIfNewPath("/", e)}
   );
 
-  // TODO: Manual
+  // TODO: Classroom
+  document.getElementById("classroom").addEventListener("click", (e: MouseEvent) =>{ 
+    routeIfNewPath("/waiting-room", e)}
+  );
 
   // Editor
   document.getElementById("editor").addEventListener("click", (e: MouseEvent) =>{ 
@@ -57,6 +65,10 @@ function setNavbarListeners() {
   document.getElementById("community").addEventListener("click", (e: MouseEvent) =>{ 
     routeIfNewPath("/community", e)}
   );
+    // Community Levels
+    document.getElementById("tutorials").addEventListener("click", (e: MouseEvent) =>{ 
+      routeIfNewPath("/tutorials", e)}
+    );
 
   // Profile
   document.getElementById("profile").addEventListener("click", (e: MouseEvent) => {

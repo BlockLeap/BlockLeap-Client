@@ -13,6 +13,7 @@ export default class TrapObject extends ArticodingSprite {
     this.scene.add.existing(this);
 
     document.addEventListener("change_status", this.changeStatus);
+    document.addEventListener("switch_status", this.switchStatus);
   }
 
   private changeStatus = (e) => {
@@ -23,6 +24,16 @@ export default class TrapObject extends ArticodingSprite {
       // Turn off
       this.disable();
     } else if (!this.isOn && turnOn) {
+      // Turn on
+      this.enable();
+    }
+  }
+  
+  private switchStatus = (e) => {
+    if (this.isOn) {
+      // Turn off
+      this.disable();
+    } else if (!this.isOn) {
       // Turn on
       this.enable();
     }

@@ -43,10 +43,10 @@ function getLevelEditorHTML() {
             </div>`;
 }
 
-export default function loadLevelEditor(levelJSON?: Level.Phaser) {
+export default function loadLevelEditor(levelJSON?: Level.Level) {
     document.getElementById("content").innerHTML = getLevelEditorHTML();
     const cookie = sessionCookieValue();
     if(!cookie)
-        alert("Inicia sesin para poder guardar niveles")
+        alert("Log in to be able to save levels");
     PhaserController.init("LevelEditor", LevelEditor, { levelJSON });
 }

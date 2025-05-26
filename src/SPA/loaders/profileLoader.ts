@@ -1,10 +1,14 @@
 import * as bootstrap from 'bootstrap';
 import { route } from "../../client";
+//import $ from 'jquery';
+import 'datatables.net';
+
 
 import config from '../../Game/config.js';
-import { fetchRequest } from '../utils';
+import { fetchRequest, fillContent } from '../utils';
 import XAPISingleton from '../../xAPI/xapi.js';
 import { getUserNameAndUUID, setPageHome } from '../app.js';
+import { loadLevel } from './levelPlayerLoader';
 const API_ENDPOINT = `${config.API_PROTOCOL}://${config.API_DOMAIN}:${config.API_PORT}/api`;
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
 // Variable para controlar si el evento click ya se agregó al botón
@@ -14,8 +18,47 @@ let registerSubmitBtnAdded = false;
  *
  * @returns String of HTMLDivElement for showing levels/categories
  */
-function getRowHTML() {
-  return '<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>';
+function getRowHTML(user) {
+  const createSetButton = user.role === 'Profesor' ? `
+  <div class="text-center w-100">
+<button id="createSetBtn" class="btn btn-success btn-lg w-30">Create Level Set</button>
+   </div>
+` : '';
+  return `<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
+           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">YOUR SETS</h2>
+            ${createSetButton}
+           <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="sets"></div>
+           <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">YOUR LEVELS</h2>
+           <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
+          <div class="container mb-3">
+            <div id="selectDiv" class="mt-3 p-1">
+              <select id="levelSelect" name="tags[]" multiple="multiple" style="width: 100%">
+                <option value="LP">Loops</option>
+                <option value="VR">Variable</option>
+                <option value="BS">Basic</option>
+              </select>
+            </div>
+            <div class="mt-3">
+              <button class="btn btn-primary w-100 px-5" type="button" id="filterButton"><i class="bi bi-search"></i> Search
+              </button>
+            </div>
+          </div>
+          <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2 w-75 mx-auto" id="display"></div>
+          <div id="pageDiv" class="d-flex justify-content-center mt-3">
+            <nav aria-label="pages">
+              <ul class="pagination pagination-lg" id="paginationList">
+              </ul>
+            </nav>
+          </div>
+  `;
+}
+
+function getRowHTML2() {
+  return `<div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="categories"></div>
+          <h2 class="text-center w-75 mx-auto pt-3" style="color: white;">YOUR LEVELS</h2>
+           <div class="row row-cols-1 g-2 w-75 mx-auto pt-3" id="levels"></div>
+           <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-2 w-75 mx-auto" id="display"></div>
+  `;
 }
 
 export function sessionCookieValue() {
@@ -70,7 +113,7 @@ async function userLogin(modal : bootstrap.Modal) {
   } catch (error) {
       if (error.status === 401 || error.status === 404) {
         const errorElement = document.getElementById("text-error-login");
-        errorElement.innerText = "Error con el username o contraseña";
+        errorElement.innerText = "Error with the username or password";
         errorElement.style.color = "red";
       }
       else if (error.status === 503) { // Offline mode
@@ -88,7 +131,7 @@ async function useRegister(modal : bootstrap.Modal):Promise<any> {
     .value;
   if (userName.length < 3) {
     const errorElement = document.getElementById("text-error-register");
-    errorElement.innerText = "El nombre de usuario debe tener al menos 3 letras";
+    errorElement.innerText = "The username must be at least 3 characters long";
     errorElement.style.color = "red";
     return; 
   }
@@ -99,14 +142,14 @@ async function useRegister(modal : bootstrap.Modal):Promise<any> {
 
   if (!PASSWORD_REGEX.test(userPassword)) {
     const errorElement = document.getElementById("text-error-register");
-    errorElement.innerText = "La contraseña debe contener al menos 1 mayúscula, 1 número y tener más de 5 letras";
+    errorElement.innerText = "The password must contain at least 1 uppercase letter, 1 number, and be longer than 5 characters";
     errorElement.style.color = "red";
     return; 
   }
   const confirmPassword = (document.getElementById("confirmPassword") as HTMLInputElement).value;
   if (userPassword !== confirmPassword) {
     const errorElement = document.getElementById("text-error-register");
-    errorElement.innerText = "Las contraseñas no coinciden";
+    errorElement.innerText = "The passwords do not match";
     errorElement.style.color = "red";
     return; 
   }
@@ -122,12 +165,12 @@ async function useRegister(modal : bootstrap.Modal):Promise<any> {
       JSON.stringify(postData)
     );
     modal.hide();
-    alert("Registro correcto, inicia sesión")
+    alert("Registration successful, please log in");
   }
   catch(error) {
     if (error.status === 409) {
       const errorElement = document.getElementById("text-error-register");
-      errorElement.innerText = "El username ya existe";
+      errorElement.innerText = "The username already exists";
       errorElement.style.color = "red";
     }
     else if (error.status === 503) { // Offline mode
@@ -146,7 +189,7 @@ export function appendLoginModal() {
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="loginModalLabel">Inicio de Sesión</h5>
+                        <h5 class="modal-title" id="loginModalLabel">Login</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -156,14 +199,14 @@ export function appendLoginModal() {
                                 <input type="text" class="form-control" id="username" required>
                             </div>
                             <div class="mb-3">
-                                <label for="password" class="form-label">Contraseña</label>
+                                <label for="password" class="form-label">Password</label>
                                 <input type="password" class="form-control" id="password" required>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="loginReq">Iniciar Sesión</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" id="registerBtn">¿No tienes cuenta?</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close" id="loginReq">Login</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" id="registerBtn">Don't have an account?</button>
                         <span id="text-error-login"></span>
                     </div>
                 </div>
@@ -201,35 +244,238 @@ export function appendLoginModal() {
   }
 }
 
+function appendSetsTable(userSets) {
+  console.log("Appending sets table with data:", userSets);
+  // Crear el contenedor de la tabla
+  const setsTableHtml = `
+  <div class="container bg-white p-3 rounded-3">
+    <table id="setsTable" class="display" style="width:100%">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Number of levels</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${userSets
+          .map(
+            (set) => `
+          <tr>
+            <td><a href="set/${set.id}" class="set">${set.name}</a></td>
+            <td>${set.description}</td>
+            <td>${set.levelCount}</td> 
+          </tr>
+        `
+          )
+          .join("")}
+      </tbody>
+    </table>
+    </div>
+  `;
+
+  // Insertar la tabla en el contenedor con ID "sets"
+  const setsDiv = document.getElementById("sets");
+  setsDiv.innerHTML = setsTableHtml;
+
+  // Inicializar DataTables
+  $(document).ready(function () {
+    $("#setsTable").DataTable();
+  });
+
+  // Agregar eventos a los enlaces de los sets
+  document.querySelectorAll("a.set").forEach((setLink) => {
+    setLink.addEventListener("click", loadSet);
+  });
+}
+
+async function countLevel(setId){
+  const userLevels = await fetchRequest(
+    `${API_ENDPOINT}/level/countSetLevels/${setId}`,
+    "GET"
+  );
+  return userLevels;
+}
+
+async function appendCreateSetModal(user) {
+  const itemsPerPage=8;
+  let sdata={user_id:user.id,page:1,tags:""};
+  const res = await fetchRequest(
+    `${API_ENDPOINT}/level/paginatedUserLevels/${JSON.stringify(sdata)}`,
+    "GET"
+  );
+  const userLevels= res.rows;
+  let totalPages=(res.count/itemsPerPage);if((res.count%itemsPerPage)!=0)totalPages++;
+  loadPageNav(totalPages,1,"paginationList","getPage");
+
+  let createSetModalHtml = `
+  <div id="createSetModal" class="modal fade" tabindex="-1" aria-labelledby="createSetModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+          <div class="modal-content">
+              <div class="modal-header bg-primary text-white">
+                  <h5 class="modal-title" id="createSetModalLabel">Create Level Set</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <form id="createSetForm">
+                      <div class="mb-3">
+                          <label for="setName" class="form-label">Name of the Set</label>
+                          <input type="text" class="form-control" id="setName" required>
+                      </div>
+                     <div>
+                          <label for="setDescription" class="form-label">Descriptionn</label>
+                          <textarea class="form-control" id="setDescription" rows="3" required></textarea>
+                      </div>
+                      <div class="mb-3">
+                          <label for="setLevels" class="form-label">Add levels</label>
+                          <div class="mt-3 px-2">
+                            <select id="modalLevelSelect" name="tags[]" multiple="multiple" style="width: 75%">
+                              <option value="LP">Loops</option>
+                              <option value="VR">Variable</option>
+                              <option value="BS">Basic</option>
+                            </select>
+                          </div>
+                          <div class="mt-3">
+                            <button class="btn btn-primary w-75" type="button" id="modalFilterButton"><i class="bi bi-search"></i> Search
+                            </button>
+                          </div>
+                          <div id="setLevels" class="form-check">
+                              <!-- Los niveles se llenarán dinámicamente con checkboxes -->
+                              ${userLevels.map(level => `
+                                <div class="form-check">
+                                  <input class="form-check-input" type="checkbox" value="${level.id}" id="level-${level.id}">
+                                  <label class="form-check-label" for="level-${level.id}">
+                                    ${level.title}
+                                  </label>
+                                </div>
+                              `).join('')}
+                          </div>
+                      </div>
+                  </form>
+                  <div id="pageDiv" class="d-flex justify-content-center mt-3">
+                    <nav aria-label="pages">
+                      <ul class="pagination" id="createSetPaginationList">
+                      </ul>
+                    </nav>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-primary" id="saveSetBtn">Save Set</button>
+              </div>
+          </div>
+      </div>
+  </div>`;
+
+  let createSetModal = document.createElement("div");
+  createSetModal.innerHTML = createSetModalHtml;
+  document.body.appendChild(createSetModal);
+
+
+  $('#modalLevelSelect').select2({placeholder:"Filter by tags",allowClear:true,dropdownParent: $('#createSetModal')});
+  $('#modalFilterButton').on("click",()=>{loadModalLevels(1)});
+
+  let createSetModalElement = document.querySelector("#createSetModal");
+  let createSetModalInstance = new bootstrap.Modal(createSetModalElement);
+
+  createSetModalElement.addEventListener("hidden.bs.modal", function () {
+      createSetModalElement.remove();
+  });
+
+  createSetModalInstance.show();
+
+  loadPageNav(totalPages,1,"createSetPaginationList","getModalPage");
+  document.querySelectorAll("a.getModalPage").forEach((page) => {
+    page.addEventListener("click", loadModalPagination);
+  });
+
+  document.getElementById("saveSetBtn")?.addEventListener("click", async function (event) {
+      event.preventDefault();
+      let setName = (document.getElementById("setName") as HTMLInputElement).value.trim();
+      let setDescription = (document.getElementById("setDescription") as HTMLTextAreaElement).value.trim();
+      
+      // Obtener los niveles seleccionados (IDs de los checkboxes marcados)
+      const selectedLevels = Array.from((document.getElementById("setLevels") as HTMLDivElement).querySelectorAll('input[type="checkbox"]:checked'))
+                                  .map((checkbox: HTMLInputElement) => checkbox.value);
+
+      if (setName === "" || setDescription === "") {
+        alert("Please, fill in all the fields.");
+        return;
+      }
+
+      let postData = {
+          name: setName,
+          description: setDescription,
+          levels: selectedLevels,
+          user:user.id
+      };
+
+      try {
+           await fetchRequest(
+              `${API_ENDPOINT}/set/create/`,
+              "POST",
+              JSON.stringify(postData)
+            );
+          createSetModalInstance.hide();
+          
+  // Crear un mensaje de "Cambios Guardados"
+  const successMessage = document.createElement("div");
+  successMessage.textContent = "Changes saved successfully.!";
+  successMessage.style.position = "fixed";
+  successMessage.style.top = "20px";
+  successMessage.style.left = "50%";
+  successMessage.style.transform = "translateX(-50%)";
+  successMessage.style.padding = "10px 20px";
+  successMessage.style.backgroundColor = "green";
+  successMessage.style.color = "white";
+  successMessage.style.borderRadius = "5px";
+  successMessage.style.fontSize = "16px";
+  successMessage.style.zIndex = "1000";
+
+  // Insertar el mensaje en el body
+  document.body.appendChild(successMessage);
+
+  
+  setTimeout(() => {
+  successMessage.remove();
+  }, 3000);
+      } catch (error) {
+        console.error('Error creating the level set:', error);
+        alert("There was an error creating the level set.");
+        
+      }
+  });
+}
+
 function appendRegisterModal() {
   let registerModalHtml = `
         <div id="registerModal" class="modal fade" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title" id="registerModalLabel">Registro de Cuenta</h5>
+                        <h5 class="modal-title" id="registerModalLabel">Account Registration</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p class = "text-success" >Nombre con más de 3 letras. La contraseña debe contener al menos 1 mayúscula, 1 número y tener más de 5 letras </p>
+                      <p class="text-success">Username must contain more than 3 characters. The password must contain at least 1 uppercase letter, 1 number, and be longer than 5 characters.</p>
                         <form id="registerForm">
                             <div class="mb-3">
-                                <label for="userName" class="form-label">Nombre</label>
+                                <label for="userName" class="form-label">Name</label>
                                 <input type="text" class="form-control" id="userName" required>
                             </div>
                             <div class="mb-3">
-                                <label for="userPassword" class="form-label">Contraseña</label>
+                                <label for="userPassword" class="form-label">Password</label>
                                 <input type="password" class="form-control" id="userPassword" required>
                             </div>
                             <div class="mb-3">
-                                <label for="confirmPassword" class="form-label">Confirmar Contraseña</label>
+                                <label for="confirmPassword" class="form-label">Repeat password</label>
                                 <input type="password" class="form-control" id="confirmPassword" required>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary" id="registerSubmitBtn">Registrarse</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="registerSubmitBtn">Register</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <span id="text-error-register"></span>
                     </div>
                 </div>
@@ -271,41 +517,41 @@ function generateProfilePlaceholder() {}
  * @param {Object} user with id, name and role
  * @returns String of HTMLDivElement
  */
-async function generateProfileDiv(user, userLevels, totalStars, officialLevelCompleted) {
-  const levelDivs = await Promise.all(userLevels.map(level => generateLevelDiv(level)));
+async function generateProfileDiv(data) {
+  
+
+  // Verifica si el rol del usuario es "Profesor"
+
 
   return `
-      <div class="col">
-        <div class="card mx-auto border-dark d-flex flex-column h-100">
-          <h5 class="card-header card-title text-dark">
-            Tus Datos
-          </h5>
-          <div class="card-body text-dark">
-            <p> Nombre: ${user.name}</p>
-            <p> Rol: ${user.role}</p>
-            <p class="card-subtitle mb-2 text-muted">
-              Niveles Oficiales Completados: ${officialLevelCompleted}
-            </p>
-            <p class="card-subtitle mb-2 text-muted">
-              Estrellas totales conseguidas: ${totalStars}
-            </p>
-            <button type="submit" class="btn btn-danger" id="logoutBtn">
-                Cerrar Sesion
-            </button>
+    <div class="container">
+      <!-- Perfil del usuario -->
+      <div class="row w-100 mb-4">
+        <div class="col-12">
+          <div class="card mx-auto border-dark d-flex flex-column h-100">
+            <h5 class="card-header card-title text-dark">
+              Your Data
+            </h5>
+            <div class="card-body text-dark">
+              <p> Name: ${data.user.name}</p>
+              <p> Role: ${data.user.role}</p>
+              <p class="card-subtitle mb-2 text-muted">
+                Official Levels Completed: ${data.officialLevelCompleted}
+              </p>
+              <p class="card-subtitle mb-2 text-muted">
+                Total Stars Earned: ${data.totalStars}
+              </p>
+              <button type="submit" class="btn btn-danger" id="logoutBtn">
+                Log Out
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      <div class="col">
-        <div class="card mx-auto border-dark d-flex flex-column h-100">
-          <h5 class="card-header card-title text-dark">
-            Tus niveles que has creado
-          </h5>
-        </div>
-      </div>
-      ${levelDivs.join("")}
-      `;
-  
+    </div>
+  `;
 }
+
 
 async function generateLevelDiv(level) {
   if (!level) {
@@ -342,6 +588,45 @@ async function generateLevelDiv(level) {
     </div>`;
 }
 
+async function generateSetDiv(set) {
+  return `<div class="col">
+              <div class="card mx-auto border-dark d-flex flex-column h-100">
+                <a class="set" href="set/${set.id}">
+                    <h5 class="card-header card-title text-dark">
+                      ${set.name}
+                    </h5>
+                    <div class="card-body text-dark">
+                      ${set.description}
+                    </div>
+                </a>
+              </div>
+            </div>`;
+}
+
+export async function loadSet(event) {
+  event.preventDefault();
+  const anchorTag = event.target.closest("a.set");
+  const id = anchorTag.href.split("set/")[1];
+  history.pushState({ id }, "", `set?id=${id}`);
+  route();
+}
+async function generateMSG(message) {
+  var msg=`<div class="container m-5">
+      </div><div class="text-center text-muted bg-body p-2 rounded-5">
+        <h1 class="text-body-emphasis">${message.msg}</h1>
+        <p class="col-lg-6 mx-auto mb-4">
+        ${message.desc}
+        </p>`;
+  if(message.buttonName){
+    msg+=`</p><button class="btn btn-primary px-5 mb-5" type="button" id="${message.buttonName}">
+    ${message.buttonMsg}
+    </button>`
+  }
+  msg+=`</div>
+    </div>`
+  return msg
+}
+
 async function logout(){
   let logoutSubmitBtn = document.getElementById("logoutBtn");
   logoutSubmitBtn.addEventListener("click", async function (event) {
@@ -371,18 +656,109 @@ async function playLevel(event) {
   event.preventDefault();
   const anchorTag = event.target.closest("a.getLevel");
   const id = anchorTag.href.split("level/")[1];
-  history.pushState({ id }, "", `level?id=${id}`);
+  history.pushState({ id }, "", `classLevel?id=${id}`);
 
   route();
 }
-export default async function loadProfile() {
-  document.getElementById("content").innerHTML = getRowHTML();
-  const divElement = document.getElementById("categories");
 
-  // Load placeholders
-  // divElement.innerHTML = generateProfilePlaceholder();
+async function loadPageNav(pages,currentPage,paginationList,className){
+  const user = sessionCookieValue();
+  const list= document.getElementById(paginationList);
+  let items='';
+  for(let i=1; i<=pages;i++){
+    if(i==currentPage)
+      items+=`<li class="page-item"><a class="page-link active ${className}" href="${API_ENDPOINT}/level/userlevels/${user.id}/${i}">${i}</a></li>`
+    else
+      items+=`<li class="page-item"><a class="page-link ${className}" href="${API_ENDPOINT}/level/userlevels/${user.id}/${i}">${i}</a></li>`
+  }
+  list.innerHTML=items;
+}
+async function loadPagination(event) {
+  event.preventDefault();
+  const user = sessionCookieValue();
+  const anchorTag = event.target.closest("a.getPage");   
+  const page = anchorTag.href.split(`level/userlevels/${user.id}/`)[1];
+  loadLevels(page);
+}
+
+async function loadModalPagination(event) {
+  event.preventDefault();
+  const user = sessionCookieValue();
+  const anchorTag = event.target.closest("a.getModalPage");   
+  const page = anchorTag.href.split(`level/userlevels/${user.id}/`)[1];
+  loadModalLevels(page);
+}
+async function loadModalLevels(page){
+  const itemsPerPage=8;
+  const user = sessionCookieValue();
+  const selectData=$('#modalLevelSelect').select2('data');
+  const map=selectData.map(i=>i.text);
+  let sdata={user_id:user.id,page:page,tags:map};
+  const res = await fetchRequest(
+    `${API_ENDPOINT}/level/paginatedUserLevels/${JSON.stringify(sdata)}`,
+    "GET"
+  );
+  let totalPages=(res.count/itemsPerPage);if((res.count%itemsPerPage)!=0)totalPages++;
+  loadPageNav(totalPages,page,"createSetPaginationList","getModalPage");
+  let levelDiv=document.getElementById("setLevels");
+  levelDiv.innerHTML=res.rows.map(level => `
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="${level.id}" id="level-${level.id}">
+      <label class="form-check-label" for="level-${level.id}">
+        ${level.title}
+      </label>
+    </div>
+  `).join('');
+  document.querySelectorAll("a.getModalPage").forEach((page) => {
+    page.addEventListener("click", loadModalPagination);
+  });
+}
+async function loadLevels(page){
+  const user = sessionCookieValue();
+  const itemsPerPage=6;
+  const divElement = document.getElementById("categories");
+  const selectData=$('#levelSelect').select2('data');
+  const map=selectData.map(i=>i.text);
+  let sdata={user_id:user.id,page:page,tags:map};
+  const res = await fetchRequest(
+    `${API_ENDPOINT}/level/paginatedUserLevels/${JSON.stringify(sdata)}`,
+    "GET"
+  );
+  const levels= res.rows;
+  let totalPages=(res.count/itemsPerPage);if((res.count%itemsPerPage)!=0)totalPages++;
+  loadPageNav(totalPages,page,"paginationList","getPage");
+  if(levels.length!=0){
+    const levelDiv = document.getElementById("display");
+    await fillContent(levelDiv, levels, generateLevelDiv);
+    document.querySelectorAll("a.levels").forEach((levelDiv) => {
+      levels.addEventListener("click", loadLevel);
+    });
+  }else{
+    var messages=[{msg:"No levels found",desc:"You can create levels with the level editor",buttonName:"",buttonMsg:""}];
+    const textElement = document.getElementById("display");
+    await fillContent(textElement, messages, generateMSG);
+  }
+    // Add getLevel event listener
+  document.querySelectorAll("a.getLevel").forEach((level) => {
+    level.addEventListener("click", playLevel);
+  });
+  document.querySelectorAll("a.getPage").forEach((page) => {
+    page.addEventListener("click", loadPagination);
+  });
+}
+async function filterSearch(){
+  loadLevels(1);
+}
+
+export default async function loadProfile() {
 
   try {const user = sessionCookieValue();
+    if(user.role=="Profesor"){
+      document.getElementById("content").innerHTML = getRowHTML(user);
+    } else{
+      document.getElementById("content").innerHTML = getRowHTML2();
+    }
+    const divElement = document.getElementById("categories");
     const officialLevelCompleted = await fetchRequest(
       `${API_ENDPOINT}/user/officialLevelsCompleted`,
       "GET",
@@ -393,12 +769,97 @@ export default async function loadProfile() {
       `${API_ENDPOINT}/user/totalStars/${user.id}`,
       "GET"
     );
+
     const userLevels = await fetchRequest(
       `${API_ENDPOINT}/level/userLevels/${user.id}`,
       "GET"
-    );
-    divElement.innerHTML = await generateProfileDiv(user, userLevels, totalStars, officialLevelCompleted);
+    );  
+      const userSets = await fetchRequest(
+            `${API_ENDPOINT}/set/userSets/${user.id}`,
+            "GET"
+      );
+      if(user.role == "Profesor"){
+        if (userSets.length !== 0) {
+          await Promise.all( userSets.map(
+              async (set) => {const count=await countLevel(set.id);
+                set.levelCount= count;
+              }
+              ))
+          await appendSetsTable(userSets);
+        } else {
+          const setsDiv = document.getElementById("sets");
+          setsDiv.innerHTML = `<p class="text-center text-muted">No tienes sets creados.</p>`;
+        }
+        
+      }
+          
+
+   // divElement.innerHTML = await generateProfileDiv(user, totalStars, officialLevelCompleted);
+
+    const data = {
+      user: user,
+      totalStars: totalStars,
+      officialLevelCompleted: officialLevelCompleted,
+    }
+
+    $('#levelSelect').select2({placeholder:"Filter by tags",allowClear:true});
+    $('#filterButton').on("click",filterSearch);
+
+    await fillContent(divElement, [data], generateProfileDiv);
+
+    loadLevels(1);
+
+
+   /*  if(userSets.length!=0){
+      const setDiv = document.getElementById("sets");
+      await fillContent(setDiv, userSets, generateSetDiv);
+      document.querySelectorAll("a.set").forEach((userSets) => {
+        userSets.addEventListener("click", loadSet);
+       });
+    } */
+    
+    if(userLevels.length!=0){
+      const levelDiv = document.getElementById("display");
+      await fillContent(levelDiv, userLevels, generateLevelDiv);
+      document.querySelectorAll("a.levels").forEach((levelDiv) => {
+        userLevels.addEventListener("click", loadLevel);
+       });
+  } else{
+    var messages = [
+      {
+        msg: "You haven't created any levels yet",
+        desc: "Create levels in the editor to see your levels",
+        buttonName: "",
+        buttonMsg: ""
+      }
+    ];
+      const textElement = document.getElementById("levels");
+      await fillContent(textElement, messages, generateMSG);
+  }
+    
+ /*  if (userSets.length !== 0) {
+    // Llama a la función para generar la tabla dinámica
+    await appendSetsTable(userSets);
+  } else {
+    // Si no hay sets, muestra un mensaje
+    const setsDiv = document.getElementById("sets");
+    setsDiv.innerHTML = `<p class="text-center text-muted">No tienes sets creados.</p>`;
+  } */
+    // if(userSets.length!=0){
+    //   const setDiv = document.getElementById("sets");
+    //   await fillContent(setDiv, userSets, generateSetDiv);
+    //   document.querySelectorAll("a.set").forEach((userSets) => {
+    //     userSets.addEventListener("click", loadSet);
+    //    });
+  // }
+
      // Add getLevel event listener
+     if(user.role=="Profesor"){
+      document.getElementById("createSetBtn").addEventListener("click", (e: MouseEvent) => {
+        appendCreateSetModal(user); 
+     });
+     }
+      
     document.querySelectorAll("a.getLevel").forEach((level) => {
       level.addEventListener("click", playLevel);
     });

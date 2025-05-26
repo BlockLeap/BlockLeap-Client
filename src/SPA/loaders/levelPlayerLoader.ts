@@ -15,7 +15,9 @@ let currentFromLevelEditor: boolean = false;
  *
  * @returns String of HTMLElement for LevelPlayer
  */
-function getLevelPlayerHTML(fromLevelEditor?: boolean) {
+
+
+function getLevelPlayerHTML(levelJSON: Level.Level,fromLevelEditor?: boolean) {
     return `<div class="row row-cols-1 row-cols-lg-2 h-100 gx-1">
               <div id="blocklyArea" class="col col-lg-4 h-100 position-relative collapse collapse-horizontal show">
                   <div id="blocklyDiv" class="position-absolute"></div>
@@ -31,23 +33,139 @@ function getLevelPlayerHTML(fromLevelEditor?: boolean) {
               <div id="phaserDiv" class="col col-lg-8 mh-100 p-0 position-relative">
                   <canvas id="phaserCanvas"></canvas>
                   <div class="position-absolute top-0 end-0 mt-2 me-2">
+                        ${getSaveButton(fromLevelEditor)}
                         ${getEditButton(fromLevelEditor)}
+                        ${getBlockLimitButton(fromLevelEditor)}
+                        ${getStarsInfo(levelJSON, fromLevelEditor)}
                         <button class="btn btn-warning" id="speedModifierBtn" value="1">
                             1x
                         </button>
                         <button class="btn btn-light" id="levelPlayerTourBtn">
                             <i class="bi bi-question"></i>
                         </button>
-                  </div>
               </div>
-            </div>`;
+            </div>
+            ${getBlockLimitMenu(fromLevelEditor)}`
+            ;
 }
+
+function getStarsInfo(levelJSON: Level.Level, fromLevelEditor?: boolean) {
+    if (fromLevelEditor) {
+        return ''; // No mostrar nada si estamos en el editor
+    }
+    
+    currentLevelJSON = levelJSON;
+    if (currentLevelJSON.firstStar===undefined||(currentLevelJSON.firstStar.first === undefined && currentLevelJSON.secondStar.first === undefined && currentLevelJSON.thirdStar.first === undefined)) {
+        return ''; // No hacer nada si no existen
+    }
+    return `<div style="position: absolute; top: 3%; right: 5%; margin-top: 60px; margin-right: 0px; background: #833c51; color: white; border: 2px solid #ffc107; border-radius: 10px; width: 150px; padding: 10px; font-size: 14px;">
+                    <h2 style="background: #ffc107; color: black; font-size: 12px; text-align: center; padding: 5px; margin: -10px -10px 10px -10px; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                    COLLECT ALL STARS:</h2>
+                    <ul>
+                        ${currentLevelJSON.firstStar.first ? `<li><i class="bi bi-star-fill"></i>${currentLevelJSON.firstStar.second}</li>` : ""}
+                        ${currentLevelJSON.secondStar.first ? `<li><i class="bi bi-star-fill"></i>${levelJSON.secondStar.second}</li>` : ""}
+                        ${currentLevelJSON.thirdStar.first ? `<li><i class="bi bi-star-fill"></i>${levelJSON.thirdStar.second}</li>` : ""}
+                    </ul>
+                </div>`;
+}
+
 
 function getEditButton(fromLevelEditor: boolean) {
     return `<button class="btn btn-primary" id="editButton">
                 <i class="bi ${fromLevelEditor ? "bi-pencil-square" : "bi-copy"}"></i>
             </button>`;
 }
+function getSaveButton(fromLevelEditor: boolean) {
+    return fromLevelEditor ? 
+        `<button class="btn btn-primary" id="saveButton">
+            <i class="bi bi-archive"></i>
+        </button>` 
+        : "";
+}
+function getBlockLimitButton(fromLevelEditor: boolean) {
+    
+    return fromLevelEditor ? `<button class="btn btn-primary" id="blockLimitButton" data-bs-toggle="offcanvas" 
+    data-bs-target="#offcanvasBlockLimit" aria-controls="offcanvasBlockLimit">
+                <i class="bi bi-ui-checks"></i>
+            </button>` :'';
+}
+function getBlockLimitMenu(fromLevelEditor: boolean) {
+    var nameMap={"movement":"Actions", "math_number":"Numbers","for_X_times":"Loops", "changeStatus":"Change Trap"};
+    var blockMap={"movement":"Actions", "math_number":"Numbers","for_X_times":"Loops", "changeStatus":"Actions"};
+    var menu=
+    `<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasBlockLimit" aria-labelledby="offcanvasBlockLimitLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasBlockLimitLabel">Blocks limits</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body"><div class="accordion" id="blockLimitAccordion">`
+
+    //adding normal blocks limiters
+    for(var block in blockMap) {
+        var mayus=block.charAt(0).toUpperCase()+block.slice(1);
+        menu+=`<div class="accordion-item">
+                <div class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${mayus}" aria-expanded="true" aria-controls="collapse${mayus}">
+                <h5>${nameMap[block]} block</h5><img src="./images/${mayus}Block.png" alt="${mayus}blockImage"
+                class=""></button></div>
+                <div id="collapse${mayus}" class="accordion-collapse collapse show">
+                <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="${block}SwitchCheck" checked>
+                        <label class="form-check-label" for="${block}SwitchCheck">Enable</label>
+                </div>
+                <span id="${block}NumberLimitForm">
+                <div>
+                <label class="form-check-label" for="${block}NumberCheck">Usage Limit</label>
+                </div>
+                <div class="input-group mb-3" >
+                    <div class="input-group-text">
+                    <input class="form-check-input mt-0" type="checkbox" value="" aria-label="Check limit for ${block} block" id="${block}NumberCheck">
+                    </div>
+                    <form class="form-floating">
+                    <input type="number" class="form-control" aria-label="limit for ${block} block"  id="${block}NumberLimit" min="1" value="1">
+                    <label class="form-check-label" for="${block}NumberLimit">${nameMap[block]} Number Limit</label>
+                    </form>
+                </div></span>
+                </div>
+                </div>
+                `
+    }
+
+    //adding variable block limiters
+    var variableBlocksName = {"variables_set":"Set Variable", "variables_get":"Variable", "math_change":"Change Variable"};
+    var variableBlocks=["variables_set","variables_get","math_change"];
+    menu+= `    <div class="accordion-item">
+                <div class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseVariables" aria-expanded="true" aria-controls="collapseVariables">
+                <h5>Variable blocks</h5></div>
+                <div id="collapseVariables" class="accordion-collapse collapse show">
+                <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="VariablesSwitchCheck" checked>
+                        <label class="form-check-label" for="VariablesSwitchCheck">Enable</label>
+                </div> <span id=VariablesLimitForm>
+                `
+    for(var block of variableBlocks){
+        var mayus=block.charAt(0).toUpperCase()+block.slice(1);
+        menu+=
+                `
+                <div>
+                <label class="form-check-label" for="${block}NumberCheck">${variableBlocksName[block]} Usage Limit</label>
+                <img src="./images/${mayus}Block.png" alt="${mayus}blockImage"class="">
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-text">
+                    <input class="form-check-input mt-0" type="checkbox" value="" aria-label="Check limit for ${block} block" id="${block}NumberCheck">
+                    </div>
+                    <form class="form-floating">
+                    <input type="number" class="form-control" aria-label="limit for ${block} block"  id="${block}NumberLimit" value="1">
+                    <label class="form-check-label" for="${block}NumberLimit">${variableBlocksName[block]} Number Limit</label>
+                    </form>
+                </div>`
+    }
+    menu+=`</span></div></div>
+        </div>
+    </div>` 
+    return fromLevelEditor ? menu:'';
+}
+
 
 /**
  * Fetches a level by its ID and starts it
@@ -71,20 +189,51 @@ export default async function playLevelById(id: string) {
     }
 }
 
+/**
+ * Fetches a level by its ID and starts it
+ * @param {String} id - The ID of the level to start
+ */
+export async function playClassLevelById(id: string) {
+    try {
+        const level = await fetchRequest(`${API_ENDPOINT}/level/sets/level/${id}`, "GET");
+        loadLevel(JSON.parse(level.data), false, level.category);
+
+        if (id === "1") {
+            TourController.startIfNotFinished("LevelPlayer");
+        }
+    
+        document.getElementById("levelPlayerTourBtn").onclick = () => { TourController.start("LevelPlayer") };
+    } catch(error) {
+        if (error.status === 503) { // Offline mode
+            console.log("Received a 503 web error");
+            window.location.reload();
+        }
+    }
+}
+
 export async function loadLevel(levelJSON: Level.Level, fromLevelEditor?: boolean, category?: string) {
     if (category) {
         document.getElementById("content").setAttribute("categoryIndex", category);
     }
-    document.getElementById("content").innerHTML = getLevelPlayerHTML(fromLevelEditor);
+    document.getElementById("content").innerHTML = getLevelPlayerHTML(levelJSON,fromLevelEditor);
     currentLevelJSON = levelJSON;
     fromLevelEditor === undefined ? fromLevelEditor = false : currentFromLevelEditor = fromLevelEditor;
 
     const toolbox = levelJSON.blockly.toolbox;
     const maxInstances = currentLevelJSON.blockly.maxInstances;
     const workspaceBlocks = currentLevelJSON.blockly.workspaceBlocks;
-
     PhaserController.init("LevelPlayer", LevelPlayer, { levelJSON, fromLevelEditor });
     BlocklyController.init(BLOCKLY_DIV_ID, toolbox, maxInstances, workspaceBlocks);
+    //document.getElementById("phaserDiv").innerHTML += starsInfoHTML;      
+
+    if (fromLevelEditor && levelJSON.usedWorkspaceBlocks && levelJSON.usedWorkspaceBlocks.blocks ) {
+        try {
+            BlocklyController.loadWorkspaceBlocks(levelJSON.usedWorkspaceBlocks);
+            console.log("Workspace blocks loaded successfully in edit mode.");
+        } catch (error) {
+            console.error("Error loading workspace blocks in edit mode:", error);
+        }
+    }
 }
 
 export function restartCurrentLevel() {
